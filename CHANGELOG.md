@@ -1,3 +1,6 @@
+## 1.0.16 (2024-07-07)
++ 更新内置依赖列表，新增 `uni-rpx2px`、`uni-getProvider`、`uni-theme` 基础模块。
+
 ## 1.0.15 (2024-07-06)
 + 修复打包 `正式发行包` 时targetSdkVersion版本检测报错问题。
 
