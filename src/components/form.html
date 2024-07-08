@@ -1040,6 +1040,7 @@
 				}
 				// 判断是否有uni-push模块
 				if (Object.keys(obj).includes('uni-push')) {
+					uniPush.value = true
 					Object.keys(obj['uni-push']).map(label => {
 						getUniPushFormItem(label).value = obj['uni-push'][label];
 					})
@@ -1165,6 +1166,7 @@
 						data.saveLocalConfig = content.data
 					}
 					if (dataType === 'moduleConfig' && Object.keys(content.data).length > 0) {
+						console.log(content.data);
 						buildNoJsonConfig(content.data)
 					}
 					if (dataType === 'androidPackageName' && content.data) {

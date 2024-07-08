@@ -3,7 +3,7 @@
 	"name": "kux-easy-pack-hxp",
 	"description": "一个用来给 `uniapp/x` 打包自定义调试基座的插件，为了大幅度简化离线打包流程，让更多开发者们享受到离线打包自定义基座的丝滑体验。",
 	"displayName": "kux-easy-pack-hxp 方便快捷高效离线打包插件",
-	"version": "1.0.16",
+	"version": "1.0.17",
 	"publisher": "kux",
 	"engines": {
 		"HBuilderX": "^4.18.0"
@@ -70,6 +70,11 @@
 				"kux-easy-pack-hxp.keyPassword": {
 					"type": "string",
 					"description": "自选证书证书密码。对应安卓打包配置中的【keyPassword】。<a href=\"https://doc.dcloud.net.cn/uni-app-x/native/download/android.html\">查看详情</a>"
+				},
+				"kux-easy-pack-hxp.projectCacheConfig": {
+					"type": "boolean",
+					"default": false,
+					"description": "模块配置是否按照项目单独缓存，勾选后每次打包都会按照项目独立缓存"
 				}
 			}
 		},
