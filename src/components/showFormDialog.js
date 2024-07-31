@@ -172,6 +172,7 @@ async function showFormDialog(context) {
 					localCache.set('storePassword', msg.data.storeForm.storePassword)
 					localCache.set('keyAlias', msg.data.storeForm.keyAlias)
 					localCache.set('keyPassword', msg.data.storeForm.keyPassword)
+					localCache.set('sdkDownloadUrl', msg.data.sdkDownloadUrl)
 					await saveCache(msg.data, options, configuration)
 					start({
 						hx: hx,
@@ -233,21 +234,23 @@ async function showFormDialog(context) {
 				type: 'checkAgconnectServicesRes',
 				data: checkAgconnectServicesRes
 			}))
-			let configData = JSON.parse(await fs.readFileSync(configCachePath, 'utf-8'))
-			if (configuration.get('kux-easy-pack-hxp.projectCacheConfig')) {
-				configData = JSON.parse(await fs.readFileSync(moduleConfigCachePath, 'utf-8')).find(
-					item => item.fsPath = fsPath).data
+			if (fs.existsSync(configCachePath) || fs.existsSync(moduleConfigCachePath)) {
+				let configData = JSON.parse(await fs.readFileSync(configCachePath, 'utf-8'))
+				if (configuration.get('kux-easy-pack-hxp.projectCacheConfig')) {
+					configData = JSON.parse(await fs.readFileSync(moduleConfigCachePath, 'utf-8')).find(
+						item => item.fsPath = fsPath).data
+				}
+				const saveLocalConfig = configData?.saveLocalConfig ?? localCache.get('saveLocalConfig')
+				ws.send(JSON.stringify({
+					type: 'saveLocalConfig',
+					data: saveLocalConfig ?? false
+				}))
+				const moduleConfig = configData?.moduleConfig ?? localCache.get('moduleConfig')
+				ws.send(JSON.stringify({
+					type: 'moduleConfig',
+					data: moduleConfig ?? {}
+				}))
 			}
-			const saveLocalConfig = configData?.saveLocalConfig ?? localCache.get('saveLocalConfig')
-			ws.send(JSON.stringify({
-				type: 'saveLocalConfig',
-				data: saveLocalConfig ?? false
-			}))
-			const moduleConfig = configData?.moduleConfig ?? localCache.get('moduleConfig')
-			ws.send(JSON.stringify({
-				type: 'moduleConfig',
-				data: moduleConfig ?? {}
-			}))
 			ws.send(JSON.stringify({
 				type: 'androidPackageName',
 				data: localCache.get('androidPackageName') ?? configuration.get(
@@ -273,6 +276,12 @@ async function showFormDialog(context) {
 				data: localCache.get('keyPassword') ?? configuration.get(
 					'kux-easy-pack-hxp.keyPassword')
 			}))
+			ws.send(JSON.stringify({
+				type: 'sdkDownloadUrl',
+				data: localCache.get('sdkDownloadUrl') ?? configuration.get(
+					'kux-easy-pack-hxp.sdkDownloadUrl'
+				)
+			}))
 		} else {
 			console.log('认证失败');
 			ws.close(1008, '认证失败');
@@ -296,6 +305,7 @@ async function showFormDialog(context) {
 			localCache.set('storePath', msg.data.storeForm.storePath)
 			localCache.set('keyAlias', msg.data.storeForm.keyAlias)
 			localCache.set('keyPassword', msg.data.storeForm.keyPassword)
+			localCache.set('sdkDownloadUrl', msg.data.sdkDownloadUrl)
 			await saveCache(msg.data, options, configuration)
 			// if (msg.data.saveLocalConfig) {
 			// 	const moduleConfig = {}

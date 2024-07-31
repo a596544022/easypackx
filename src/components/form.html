@@ -388,7 +388,8 @@
 			const data = reactive({
 				uniName: '',
 				localPack: computed(() => type.value === '2'),
-				sdkDownloadUrl: 'https://web-ext-storage.dcloud.net.cn/uni-app-x/sdk/Android-uni-app-x-SDK@11973-4.23.zip',
+				// sdkDownloadUrl: 'https://web-ext-storage.dcloud.net.cn/uni-app-x/sdk/Android-uni-app-x-SDK@11973-4.23.zip',
+				sdkDownloadUrl: '',
 				androidLocalSdk: '',
 				repositoryUrl: '',
 				javaHome: '',
@@ -1183,6 +1184,9 @@
 					}
 					if (dataType === 'keyPassword' && content.data) {
 						data.storeForm.keyPassword = content.data
+					}
+					if (dataType === 'sdkDownloadUrl' && content.data) {
+						data.sdkDownloadUrl = content.data
 					}
 					if (dataType === 'autoCheckPackenvRes') {
 						if (checkAutoPackenvNotification != null) {
