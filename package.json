@@ -57,19 +57,19 @@
 				},
 				"kux-easy-pack-hxp.storePath": {
 					"type": "string",
-					"description": "自选证书证书库文件路径。<a href=\"https://doc.dcloud.net.cn/uni-app-x/native/download/android.html\">查看详情</a>"
+					"description": "自选证书证书库文件路径。<a href=\"https://ask.dcloud.net.cn/article/35777\">查看详情</a>"
 				},
 				"kux-easy-pack-hxp.storePassword": {
 					"type": "string",
-					"description": "自选证书证书库密码。对应安卓打包配置中的【storePassword】。<a href=\"https://doc.dcloud.net.cn/uni-app-x/native/download/android.html\">查看详情</a>"
+					"description": "自选证书证书库密码。对应安卓打包配置中的【storePassword】。<a href=\"https://ask.dcloud.net.cn/article/35777\">查看详情</a>"
 				},
 				"kux-easy-pack-hxp.keyAlias": {
 					"type": "string",
-					"description": "自选证书证书别名。对应安卓打包配置中的【keyAlias】。<a href=\"https://doc.dcloud.net.cn/uni-app-x/native/download/android.html\">查看详情</a>"
+					"description": "自选证书证书别名。对应安卓打包配置中的【keyAlias】。<a href=\"https://ask.dcloud.net.cn/article/35777\">查看详情</a>"
 				},
 				"kux-easy-pack-hxp.keyPassword": {
 					"type": "string",
-					"description": "自选证书证书密码。对应安卓打包配置中的【keyPassword】。<a href=\"https://doc.dcloud.net.cn/uni-app-x/native/download/android.html\">查看详情</a>"
+					"description": "自选证书证书密码。对应安卓打包配置中的【keyPassword】。<a href=\"https://ask.dcloud.net.cn/article/35777\">查看详情</a>"
 				},
 				"kux-easy-pack-hxp.projectCacheConfig": {
 					"type": "boolean",
