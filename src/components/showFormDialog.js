@@ -185,7 +185,8 @@ async function showFormDialog(context) {
 						storePath: msg.data.storeForm.storePath,
 						storePassword: msg.data.storeForm.storePassword,
 						keyAlias: msg.data.storeForm.keyAlias,
-						keyPassword: msg.data.storeForm.keyPassword
+						keyPassword: msg.data.storeForm.keyPassword,
+						uniappxNativeAndroid: configuration.get("kux-easy-pack-hxp.uniappxNativeAndroid")
 					})
 					localCache.get('webviewDialog')?.close()
 				}
@@ -331,7 +332,8 @@ async function showFormDialog(context) {
 				storePath: msg.data.storeForm.storePath,
 				storePassword: msg.data.storeForm.storePassword,
 				keyAlias: msg.data.storeForm.keyAlias,
-				keyPassword: msg.data.storeForm.keyPassword
+				keyPassword: msg.data.storeForm.keyPassword,
+				uniappxNativeAndroid: configuration.get("kux-easy-pack-hxp.uniappxNativeAndroid")
 			})
 		}
 	});
