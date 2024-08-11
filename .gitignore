@@ -1,3 +1,4 @@
 src/kux-easy-pack
 node_modules
 .DS_Store
+.idea
