@@ -155,10 +155,10 @@ async function showFormDialog(context) {
 		const key = urlParams.searchParams.get('key');
 
 		if (key === 'adminadmin2024') {
-			console.log('客户端已连接');
+			// console.log('客户端已连接');
 			globalWs = ws;
 			ws.on('message', async function incoming(message) {
-				console.log('收到消息: %s', message);
+				// console.log('收到消息: %s', message);
 				// ws.send('收到消息：' + message);
 				const msg = JSON.parse(message)
 				if (msg.type === 'confirm') {
