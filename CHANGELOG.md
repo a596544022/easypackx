@@ -1,3 +1,7 @@
+## 1.0.25 (2024-10-10)
++ 修复 `windows` 环境下部分内置依赖模块未合并的问题。
++ 修复其他已知问题。
+
 ## 1.0.24 (2024-10-09)
 + 打包模块新增画布模块，包括API：[canvasToTempFilePath](https://doc.dcloud.net.cn/uni-app-x/api/canvas-to-temp-file-path.html)、[createCanvasContextAsync](https://doc.dcloud.net.cn/uni-app-x/api/create-canvas-context-async.html)、[CanvasRenderingContext2D](https://doc.dcloud.net.cn/uni-app-x/api/canvasrenderingcontext2d.html)
 + 修复其他已知问题。
