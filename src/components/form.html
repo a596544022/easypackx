@@ -1,20 +1,23 @@
 <!-- <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script> -->
-<script src="https://s4.zstatic.net/npm/vue@3/dist/vue.global.js"></script>
+<!-- <script src="https://s4.zstatic.net/npm/vue@3/dist/vue.global.js"></script> -->
+<script src="https://registry.npmmirror.com/vue/3.5.13/files/dist/vue.global.js"></script>
 <!-- Import component library -->
 <!-- <script src="https://unpkg.com/element-plus"></script> -->
-<script src="https://s4.zstatic.net/npm/element-plus@2.7.6/dist/index.full.js"></script>
+<!-- <script src="https://s4.zstatic.net/npm/element-plus@2.7.6/dist/index.full.js"></script> -->
+<script src="https://registry.npmmirror.com/element-plus/2.7.6/files/dist/index.full.js"></script>
 
 <!-- Import style -->
 <!-- <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" /> -->
-<link rel="stylesheet" href="https://s4.zstatic.net/npm/element-plus/dist/index.css" />
+<!-- <link rel="stylesheet" href="https://s4.zstatic.net/npm/element-plus/dist/index.css" /> -->
+<link rel="stylesheet" href="https://registry.npmmirror.com/element-plus/2.7.6/files/dist/index.css" />
 
-<!-- <link rel="stylesheet" href="https://unpkg.com/lwu-css@1.0.4/dist/index.css" /> -->
+<link rel="stylesheet" href="https://unpkg.com/lwu-css@1.0.4/dist/index.css" />
 <link rel="stylesheet" href="https://s4.zstatic.net/npm/lwu-css@1.0.4/dist/index.css" />
-<!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.22.0/themes/prism.min.css" rel="stylesheet" /> -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.22.0/themes/prism.min.css" rel="stylesheet" />
 <link href="https://s4.zstatic.net/ajax/libs/prism/1.22.0/themes/prism.min.css" rel="stylesheet" />
-<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.22.0/prism.min.js"></script> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.22.0/prism.min.js"></script>
 <script src="https://s4.zstatic.net/ajax/libs/prism/1.22.0/prism.min.js"></script>
-<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.22.0/components/prism-json.min.js"></script> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.22.0/components/prism-json.min.js"></script>
 <script src="https://s4.zstatic.net/ajax/libs/prism/1.22.0/components/prism-json.min.js"></script>
 <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"
 	integrity="sha512-6qbnCNQe7wVcBDvhNJT6lZsbDKHCQQBk7yOBQg4s/9GG812CknK0EEIqG2IS10XuNxIQNWjMJd6VLwwezICz6w=="
@@ -134,6 +137,73 @@
 				<div>自选证书请参考 <a class="lwu-text-base" href="https://ask.dcloud.net.cn/article/35777">证书生成指南</a></div>
 			</div>
 			<!-- <div class="lwu-w-full divider lwu-h-px lwu-mt-3"></div> -->
+		</div>
+		<div class="lwu-mt-3">
+			<div class="lwu-flex lwu-justify-between lwu-mt-3 lwu-text-sm lwu-font-semibold lwu-items-center">
+				<div class="text-base">打包格式</div>
+				<el-radio-group v-model="data.apkType" @change="onChangeAutoCheckPackenv">
+					<el-radio value="apk">
+						<span>APK</span>
+					</el-radio>
+					<el-radio value="aab">
+						<span>AAB(谷歌商店仅支持aab)</span>
+					</el-radio>
+				</el-radio-group>
+			</div>
+			<div class="lwu-bg-grey-0 lwu-grey-7 lwu-p-3 lwu-mt-3 lwu-rounded-sm">
+				<div>自选证书请参考 <a class="lwu-text-base" href="https://ask.dcloud.net.cn/article/35777">证书生成指南</a></div>
+			</div>
+			<!-- <div class="lwu-w-full divider lwu-h-px lwu-mt-3"></div> -->
+		</div>
+		<div class="lwu-mt-3">
+			<div class="lwu-flex lwu-justify-between lwu-mt-3 lwu-text-sm lwu-font-semibold lwu-items-center">
+				<div class="text-base lwu-w-36">APK渠道包</div>
+				<el-radio-group v-model="data.apkChannelForm.channel" @change="onChangeApkChannel">
+					<el-radio value="none">
+						<span>无</span>
+					</el-radio>
+					<el-radio value="huawei">
+						<span>华为</span>
+					</el-radio>
+					<el-radio value="oppo">
+						<span>OPPO</span>
+					</el-radio>
+					<el-radio value="vivo">
+						<span>VIVO</span>
+					</el-radio>
+					<el-radio value="xiaomi">
+						<span>小米</span>
+					</el-radio>
+					<el-radio value="honor">
+						<span>荣耀</span>
+					</el-radio>
+					<el-radio value="yyb">
+						<span>应用宝</span>
+					</el-radio>
+					<el-radio value="custom">
+						<span>自定义渠道</span>
+					</el-radio>
+				</el-radio-group>
+			</div>
+			<div class="lwu-bg-grey-0 lwu-grey-7 lwu-p-3 lwu-mt-3 lwu-rounded-sm">
+				<div>请参考 <a class="lwu-text-base" href="https://doc.dcloud.net.cn/uni-app-x/tutorial/app-package.html#channel">渠道包制作指南</a></div>
+			</div>
+			<!-- <div class="lwu-w-full divider lwu-h-px lwu-mt-3"></div> -->
+		</div>
+		<div v-if="data.apkChannelForm.channel == 'custom'">
+			<el-form ref="apkChannelFormRef" label-width="150px" label-position="left" :model="data.apkChannelForm" :rules="apkChannelFormRules">
+				<el-form-item label="自定义渠道名" prop="customChannel" required class="lwu-items-center">
+					<div class="lwu-my-3 lwu-w-full" id="customChannel">
+						<!-- <el-input v-model="data.apkChannelForm.customChannel" placeholder="请输入自定义渠道名"></el-input> -->
+						<div class="lwu-flex lwu-items-center lwu-text-sm lwu-w-full lwu-font-semibold">
+							<el-input v-model="data.apkChannelForm.customChannel" placeholder="请输入自定义渠道名"></el-input>
+						</div>
+					</div>
+				</el-form-item>
+				<div class="lwu-bg-grey-0 lwu-grey-7 lwu-p-3 lwu-mt-3 lwu-rounded-sm">
+					<div class="lwu-flex lwu-items-center">可以通过<a class="lwu-text-base" href="https://doc.dcloud.net.cn/uni-app-x/api/get-app-base-info.html"> uni.getAppBaseInfo() </a>返回的<div class="lwu-font-bold">channel</div>值获取渠道名</div>
+				</div>
+			</el-form>
 		</div>
 		<div v-if="data.storeType == 2">
 			<el-form ref="storeFormRef" label-width="150px" label-position="left" :model="data.storeForm" :rules="storeFormRules">
@@ -404,7 +474,12 @@
 					keyAlias: '',
 					keyPassword: ''
 				},
-				packType: '1'
+				packType: '1',
+				apkType: 'apk',
+				apkChannelForm: {
+					channel: 'none',
+					customChannel: ''
+				}
 			})
 			const storeFormRef = ref(null)
 			const storeFormRules = reactive({
@@ -422,6 +497,12 @@
 				],
 				keyPassword: [
 					{ required: true, message: '请填写证书密码', trigger: 'blur' }
+				]
+			})
+			const apkChannelFormRef = ref(null)
+			const apkChannelFormRules = reactive({
+				customChannel: [
+					{ required: true, message: '请填写自定义渠道名', trigger: 'blur' }
 				]
 			})
 			const buildTag = (content) => {
@@ -742,6 +823,22 @@
 					}
 				}
 				if (error) return
+				if (data.apkChannelForm.channel == 'custom') {
+					if (apkChannelFormRef.value) {
+						await apkChannelFormRef.value.validate((valid, fields) => {
+							if (!valid) {
+								error = true
+								errorId = Object.keys(fields)[0]
+								// ElMessage.error({
+								// 	message: '表单校验失败，请检查表单必填项'
+								// })
+								scrollIntoView(errorId)
+								return
+							}
+						})
+					}
+				}
+				if (error) return
 				if (moduleJSON.value) {
 					const parseCode = parseCodeObj()
 					if (parseCode['uni-verify']) {
@@ -939,6 +1036,10 @@
 			
 			const onChangeAutoCheckPackenv = (value) => {
 				data.type = value
+			}
+			
+			const onChangeApkChannel = (value) => {
+				data.apkChannelForm.channel = value
 			}
 			
 			const onChangeBuildInModules = (item) => {
@@ -1333,9 +1434,12 @@
 				convertToCamelCase,
 				onChangeAutoCheckPackenv,
 				onChangeBuildInModules,
+				onChangeApkChannel,
 				uniPaymentFormRef,
 				storeFormRules,
-				storeFormRef
+				apkChannelFormRules,
+				storeFormRef,
+				apkChannelFormRef,
 			}
 		}
 	};

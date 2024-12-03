@@ -96,7 +96,7 @@ function getUIData(options) {
 				name: "sdkDownloadUrl",
 				title: "Android离线打包SDK下载地址",
 				placeholder: "请输入uni-app x Android离线打包SDK下载地址",
-				text: hx.workspace.getConfiguration().get('kux-easy-pack-hxp.sdkDownloadUrl') ?? "https://web-ext-storage.dcloud.net.cn/uni-app-x/sdk/Android-uni-app-x-SDK@11848-4.19-1.zip"
+				text: hx.workspace.getConfiguration().get('kux-easy-pack-hxp.sdkDownloadUrl') ?? "https://web-ext-storage.dcloud.net.cn/uni-app-x/sdk/Android/Android-uni-app-x-SDK@12683-4.36.zip"
 			},
 			{
 				type: "label",
