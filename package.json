@@ -80,6 +80,11 @@
 					"type": "boolean",
 					"default": false,
 					"description": "模块配置是否按照项目单独缓存，勾选后每次打包都会按照项目独立缓存"
+				},
+				"kux-easy-pack-hxp.autoPublishAppResource": {
+					"type": "boolean",
+					"default": false,
+					"description": "插件自动发行本地资源，勾选后每次打包时都会自动调用cli的发行本地资源命令"
 				}
 			}
 		},
@@ -234,6 +239,7 @@
 	],
 	"dependencies": {
 		"axios": "^1.7.2",
+		"cross-spawn": "^7.0.6",
 		"markdown-it": "^14.1.0",
 		"node-cache": "^5.1.2",
 		"ws": "^8.17.1"

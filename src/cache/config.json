@@ -5,7 +5,12 @@
     "uni-getNetworkType": {},
     "uni-media": {},
     "uni-network": {},
-    "uni-video": {}
+    "uni-video": {},
+    "uni-ad": {
+      "DCLOUDUnionId": "55555",
+      "hw": {},
+      "beizi": {}
+    }
   },
   "saveLocalConfig": true
 }

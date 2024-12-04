@@ -13,6 +13,7 @@ const path = require('path');
 const {
 	logger
 } = require('../kux-easy-pack/log/logger');
+const { executeCliCommand, getCliDir, getActiveProject, output, colors } = require('../utils');
 const localCache = new NodeCache();
 const WebSocket = require('ws');
 
@@ -147,6 +148,37 @@ async function showFormDialog(context) {
 	});
 
 	const outputChannel = hx.window.createOutputChannel('kux自定义打包');
+	const customConsoleLog = outputChannel.appendLine;
+	
+	async function executeCliPack (callback) {
+		try {
+			if (configuration.get('kux-easy-pack-hxp.autoPublishAppResource') == true) {
+				const projectName = await (await getActiveProject()).uri.name;
+				executeCliCommand(getCliDir(), ['publish', '--platform', 'APP', '--type', 'appResource',
+					'--project', projectName, '--host', 'HBuilderX'
+				], (error, code) => {
+					if (error) {
+						output.error(`自动生成本地资源失败：${error}`);
+						return;
+					}
+					
+					callback();
+				}, (outputStr) => {
+					// console.log(outputStr);
+					output.info(outputStr);
+					if (outputStr.indexOf('导出 android 成功') > -1) {
+						return true;
+					}
+					return false;
+				})
+			} else {
+				callback();
+			}
+		} catch (err) {
+			// console.log(err);
+			output.error(err);
+		}
+	}
 
 	let globalWs = null;
 
@@ -162,6 +194,7 @@ async function showFormDialog(context) {
 				// ws.send('收到消息：' + message);
 				const msg = JSON.parse(message)
 				if (msg.type === 'confirm') {
+					console.log(msg);
 					outputChannel.show();
 					localCache.set('repositoryUrl', msg.data.repositoryUrl);
 					localCache.set('uniName', msg.data.uniName);
@@ -174,21 +207,23 @@ async function showFormDialog(context) {
 					localCache.set('keyPassword', msg.data.storeForm.keyPassword)
 					localCache.set('sdkDownloadUrl', msg.data.sdkDownloadUrl)
 					await saveCache(msg.data, options, configuration)
-					start({
-						hx: hx,
-						uniappProjectPath: msg.data.uniName,
-						allowClone: true,
-						root: `${context.extensionPath}/src/kux-easy-pack`,
-						customConsoleLog: outputChannel.appendLine,
-						customSetStatusMessage: hx.window.setStatusBarMessage,
-						...msg.data,
-						storePath: msg.data.storeForm.storePath,
-						storePassword: msg.data.storeForm.storePassword,
-						keyAlias: msg.data.storeForm.keyAlias,
-						keyPassword: msg.data.storeForm.keyPassword,
-						uniappxNativeAndroid: configuration.get("kux-easy-pack-hxp.uniappxNativeAndroid")
-					})
 					localCache.get('webviewDialog')?.close()
+					await executeCliPack(() => {
+						start({
+							hx: hx,
+							uniappProjectPath: msg.data.uniName,
+							allowClone: true,
+							root: `${context.extensionPath}/src/kux-easy-pack`,
+							customConsoleLog: customConsoleLog,
+							customSetStatusMessage: hx.window.setStatusBarMessage,
+							...msg.data,
+							storePath: msg.data.storeForm.storePath,
+							storePassword: msg.data.storeForm.storePassword,
+							keyAlias: msg.data.storeForm.keyAlias,
+							keyPassword: msg.data.storeForm.keyPassword,
+							uniappxNativeAndroid: configuration.get("kux-easy-pack-hxp.uniappxNativeAndroid")
+						})
+					})
 				}
 				if (msg.type === 'checkPackenv' && msg.data.localPack) {
 					const checkPackenvRes = await checkPackenv(msg.data.androidLocalSdk, msg
@@ -321,19 +356,21 @@ async function showFormDialog(context) {
 				console.log('WebSocket 服务已停止');
 			})
 			webviewDialog.close()
-			await start({
-				hx: hx,
-				uniappProjectPath: msg.data.uniName,
-				allowClone: true,
-				root: `${context.extensionPath}/src/kux-easy-pack`,
-				customConsoleLog: outputChannel.appendLine,
-				customSetStatusMessage: hx.window.setStatusBarMessage,
-				...msg.data,
-				storePath: msg.data.storeForm.storePath,
-				storePassword: msg.data.storeForm.storePassword,
-				keyAlias: msg.data.storeForm.keyAlias,
-				keyPassword: msg.data.storeForm.keyPassword,
-				uniappxNativeAndroid: configuration.get("kux-easy-pack-hxp.uniappxNativeAndroid")
+			await executeCliPack(() => {
+				start({
+					hx: hx,
+					uniappProjectPath: msg.data.uniName,
+					allowClone: true,
+					root: `${context.extensionPath}/src/kux-easy-pack`,
+					customConsoleLog: outputChannel.appendLine,
+					customSetStatusMessage: hx.window.setStatusBarMessage,
+					...msg.data,
+					storePath: msg.data.storeForm.storePath,
+					storePassword: msg.data.storeForm.storePassword,
+					keyAlias: msg.data.storeForm.keyAlias,
+					keyPassword: msg.data.storeForm.keyPassword,
+					uniappxNativeAndroid: configuration.get("kux-easy-pack-hxp.uniappxNativeAndroid")
+				})
 			})
 		}
 	});

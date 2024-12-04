@@ -1,4 +1,3 @@
-var hx = require("hbuilderx");
 var fs = require('fs');
 var axios = require('axios')
 const {
@@ -10,10 +9,16 @@ const showReadme = require("./src/showReadme");
 const {
 	logger
 } = require("./src/kux-easy-pack/log/logger");
-const { getVersionCode } = require("./src/utils");
+const {
+	getVersionCode,
+	executeCliCommand,
+	getCliDir,
+	hx,
+	getActiveProject
+} = require("./src/utils");
 
 //该方法将在插件激活的时候调用
-function activate(context) {
+async function activate(context) {
 	axios.get('https://api.uvuejs.cn/version/easy-pack')
 		.then(response => {
 			const versionCode = getVersionCode(response.data)
@@ -22,14 +27,15 @@ function activate(context) {
 			// 获取扩展的版本号
 			const extensionVersionCode = getVersionCode(extensionPackage.version)
 			if (versionCode > extensionVersionCode) {
-				let resultPromise = hx.window.showInformationMessage(`kux自定义打包插件已发布新版本 ${response.data}。\n请及时更新，以确保插件正常工作。`, ['前往更新', '稍后提醒'])
+				let resultPromise = hx.window.showInformationMessage(
+					`kux自定义打包插件已发布新版本 ${response.data}。\n请及时更新，以确保插件正常工作。`, ['前往更新', '稍后提醒'])
 				resultPromise.then((result) => {
 					if (result == '前往更新') {
 						hx.env.openExternal('https://ext.dcloud.net.cn/plugin?id=18800')
 					}
 				})
 			}
-			
+
 		})
 		.catch(error => {
 			logger.warn('【检查插件版本异常】' + error.stack)
@@ -37,7 +43,7 @@ function activate(context) {
 	let disposable1 = hx.commands.registerCommand('extension.helloWorld', () => {
 		hx.window.showInformationMessage('你好，这是我的第一个插件扩展。');
 	});
-	let disposable2 = hx.commands.registerCommand('extension.kux.packUnixAndroid', () => {
+	let disposable2 = hx.commands.registerCommand('extension.kux.packUnixAndroid', async () => {
 		// showFormDialog(context);
 		showFormDialog(context);
 	});

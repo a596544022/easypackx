@@ -155,7 +155,7 @@
 			</div>
 			<!-- <div class="lwu-w-full divider lwu-h-px lwu-mt-3"></div> -->
 		</div>
-		<div class="lwu-mt-3">
+		<div v-if="data.apkType == 'apk'" class="lwu-mt-3">
 			<div class="lwu-flex lwu-justify-between lwu-mt-3 lwu-text-sm lwu-font-semibold lwu-items-center">
 				<div class="text-base lwu-w-36">APK渠道包</div>
 				<el-radio-group v-model="data.apkChannelForm.channel" @change="onChangeApkChannel">
@@ -589,6 +589,42 @@
 					}, {
 						label: '百度百青藤',
 						value: 'bd'
+					}, {
+						label: '华为',
+						value: 'hw'
+					}, {
+						label: '章鱼',
+						value: 'octopus'
+					}, {
+						label: '倍孜',
+						value: 'beizi'
+					}, {
+						label: '泛连',
+						value: 'funlink'
+					}, {
+						label: '聚力阅盟',
+						value: 'ym'
+					}, {
+						label: 'google',
+						value: 'google'
+					}, {
+						label: 'Pangle',
+						value: 'pangle'
+					}, {
+						label: 'InMobi',
+						value: 'inmobi'
+					}, {
+						label: 'ironSource',
+						value: 'ironsource'
+					}, {
+						label: 'Liftoff',
+						value: 'liftoff'
+					}, {
+						label: 'Mintegral',
+						value: 'mintegral'
+					}, {
+						label: 'Unity Ads',
+						value: 'unity'
 					}],
 					value: []
 				},
@@ -752,6 +788,27 @@
 					value: false,
 					desc: [`画布模块，包括API：${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/canvas-to-temp-file-path.html', 'uni.canvasToTempFilePath')}、${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/create-canvas-context-async.html', 'uni.createCanvasContextAsync')}、${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/canvasrenderingcontext2d.html', 'CanvasRenderingContext2D')}`],
 					form: []
+				},
+				{
+					label: 'uni-map-tencent',
+					value: false,
+					desc: [`腾讯地图模块，需要配置定位SDK，具体参考：${buildHref('https://doc.dcloud.net.cn/uni-app-x/collocation/manifest-modules.html#%E9%85%8D%E7%BD%AE%E5%AE%9A%E4%BD%8Dsdk', '配置定位SDK')}`],
+					form: [
+						{
+							label: 'TencentLBSAPIKey',
+							value: '',
+							compType: 'input',
+							desc: [`腾讯地图API密钥，请到 ${buildHref('https://lbs.qq.com/', '腾讯位置服务')} 申请TencentLBSAPIKey。`]
+						}
+					],
+					formModel: {
+						TencentLBSAPIKey: computed(() => otherModules.value[5].form[0].value)
+					},
+					formRules: {
+						TencentLBSAPIKey: [
+							{ required: true, message: '请输入TencentLBSAPIKey' }
+						]
+					}
 				}
 			])
 			const uniVerifyFormRef = ref(null)
@@ -866,19 +923,20 @@
 						}
 					}
 					if (parseCode['uni-push']) {
+						const parseCodeUniPush = parseCode['uni-push']
 						if (
-							!parseCode['GETUI_APPID'] &&
-							!parseCode['PUSH_APPID'] &&
-							!parseCode['MIPUSH_APPID'] &&
-							!parseCode['MIPUSH_APPKEY'] &&
-							!parseCode['MEIZUPUSH_APPID'] &&
-							!parseCode['MEIZUPUSH_APPKEY'] &&
-							!parseCode['OPPOPUSH_APPKEY'] &&
-							!parseCode['OPPOPUSH_APPSECRET'] &&
-							!parseCode['HUAWEI_APPID'] &&
-							!parseCode['VIVO_APPID'] &&
-							!parseCode['VIVO_APIKEY'] &&
-							!parseCode['HIHONOR_APPID']
+							!parseCodeUniPush['GETUI_APPID'] &&
+							!parseCodeUniPush['PUSH_APPID'] &&
+							!parseCodeUniPush['MIPUSH_APPID'] &&
+							!parseCodeUniPush['MIPUSH_APPKEY'] &&
+							!parseCodeUniPush['MEIZUPUSH_APPID'] &&
+							!parseCodeUniPush['MEIZUPUSH_APPKEY'] &&
+							!parseCodeUniPush['OPPOPUSH_APPKEY'] &&
+							!parseCodeUniPush['OPPOPUSH_APPSECRET'] &&
+							!parseCodeUniPush['HUAWEI_APPID'] &&
+							!parseCodeUniPush['VIVO_APPID'] &&
+							!parseCodeUniPush['VIVO_APIKEY'] &&
+							!parseCodeUniPush['HIHONOR_APPID']
 						) {
 							ElNotification({
 								title: '提示',
@@ -914,6 +972,19 @@
 							ElNotification({
 								title: '提示',
 								message: '【uni-payment】请至少选择一种支付平台',
+								type: 'error',
+								duration: 6000
+							})
+							return false
+						}
+					}
+					if (parseCode['uni-map-tencent']) {
+						const parseCodeUniMapTencent = parseCode['uni-map-tencent']
+						if (!parseCodeUniMapTencent['TencentLBSAPIKey']) {
+							ElNotification({
+								title: '提示',
+								dangerouslyUseHTMLString: true,
+								message: '【uni-map-tencent】模块校验错误<br/>TencentLBSAPIKey字段不能为空',
 								type: 'error',
 								duration: 6000
 							})
@@ -1073,7 +1144,9 @@
 				// 判断是否添加聚合广告平台
 				if (uniAd.modules.value.length > 0) {
 					uniAd.modules.value.map(item => {
-						moduleConfig.value['uni-ad'][item] = {}
+						if (item !== 'DCLOUDUnionId') {
+							moduleConfig.value['uni-ad'][item] = {}
+						}
 					})
 				}
 			}
@@ -1129,7 +1202,7 @@
 			}
 			
 			const parseCodeObj = () => {
-				return JSON.parse(editor.getValue());
+				return JSON.parse(editor.getValue());你刚才
 			}
 			
 			const buildNoJsonConfig = (obj) => {

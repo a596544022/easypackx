@@ -27,7 +27,7 @@
 
 ## 全局可视化配置
 插件提供了全局可视化配置。点击 `设置`-`插件配置` 即可看到 `kux自定义打包` 配置内容。
-![kux自定义打包可视化配置](https://env-00jxgwng2fks.normal.cloudstatic.cn/kux-easy-pack-hxp/5a4e7d5733cbc00475af2d9242896708.png)
+![kux自定义打包可视化配置](https://env-00jxho15nfxi.normal.cloudstatic.cn/easypack/WechatIMG296.jpg)
 
 + Android离线打包SDK下载地址：Android离线打包SDK下载地址。[详情](https://doc.dcloud.net.cn/uni-app-x/native/download/android.html)。
 + 原生工程仓库地址：请 `fork` [uniappx-native-android](https://github.com/kviewui/uniappx-native-android) 项目到自己的 github 仓库后填写代码仓库的ssh协议地址。（示例：git@github.com:kviewui/uniappx-native-android.git）
