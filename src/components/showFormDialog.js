@@ -144,7 +144,7 @@ async function showFormDialog(context) {
 
 	// 创建一个WebSocket服务器实例，监听在9991端口
 	const wss = new WebSocket.Server({
-		port: 9991
+		port: 9992
 	});
 
 	const outputChannel = hx.window.createOutputChannel('kux自定义打包');
@@ -183,7 +183,7 @@ async function showFormDialog(context) {
 	let globalWs = null;
 
 	wss.on('connection', async function connection(ws, request) {
-		const urlParams = new URL(request.url, 'http://127.0.0.1:9991');
+		const urlParams = new URL(request.url, 'http://127.0.0.1:9992');
 		const key = urlParams.searchParams.get('key');
 
 		if (key === 'adminadmin2024') {
@@ -375,7 +375,7 @@ async function showFormDialog(context) {
 		}
 	});
 
-	console.log('WebSocket服务器正在监听9991端口');
+	console.log('WebSocket服务器正在监听9992端口');
 
 	promi.then((data) => {
 		console.log(data);

@@ -1,7 +1,6 @@
 {
   "moduleConfig": {
     "uni-createWebviewContext": {},
-    "uni-getLocationSystem": {},
     "uni-getNetworkType": {},
     "uni-media": {},
     "uni-network": {},
