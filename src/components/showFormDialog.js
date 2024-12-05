@@ -150,12 +150,12 @@ async function showFormDialog(context) {
 	const outputChannel = hx.window.createOutputChannel('kux自定义打包');
 	const customConsoleLog = outputChannel.appendLine;
 	
-	async function executeCliPack (callback) {
+	async function executeCliPack (projectPath, callback) {
 		try {
 			if (configuration.get('kux-easy-pack-hxp.autoPublishAppResource') == true) {
-				const projectName = await (await getActiveProject()).uri.name;
+				// const projectName = await (await getActiveProject()).uri.name;
 				executeCliCommand(getCliDir(), ['publish', '--platform', 'APP', '--type', 'appResource',
-					'--project', projectName, '--host', 'HBuilderX'
+					'--project', projectPath, '--host', 'HBuilderX'
 				], (error, code) => {
 					if (error) {
 						output.error(`自动生成本地资源失败：${error}`);
@@ -208,7 +208,7 @@ async function showFormDialog(context) {
 					localCache.set('sdkDownloadUrl', msg.data.sdkDownloadUrl)
 					await saveCache(msg.data, options, configuration)
 					localCache.get('webviewDialog')?.close()
-					await executeCliPack(() => {
+					await executeCliPack(msg.data.uniName, () => {
 						start({
 							hx: hx,
 							uniappProjectPath: msg.data.uniName,
@@ -356,7 +356,7 @@ async function showFormDialog(context) {
 				console.log('WebSocket 服务已停止');
 			})
 			webviewDialog.close()
-			await executeCliPack(() => {
+			await executeCliPack(msg.data.uniName, () => {
 				start({
 					hx: hx,
 					uniappProjectPath: msg.data.uniName,

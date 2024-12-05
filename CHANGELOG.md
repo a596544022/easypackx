@@ -1,3 +1,56 @@
+## 1.0.29 (2024-12-05)
++ 默认CPU类型对齐官方配置，默认只打包 `arm64-v8a` 架构。
++ 新增打包格式，支持 `apk` 和 `aab` 格式。
++ 新增APK发行渠道，支持官方最新渠道配置。
++ 【内置模块】新增 `uni-privacy` 隐私API模块。
++ 【内置模块】新增 `uni-getProvider` 获取服务供应商模块。
++ 【内置模块】新增 `uni-shareWithSystem` [系统分享](https://doc.dcloud.net.cn/uni-app-x/api/share-with-system.html)模块。
++ 【内置模块】新增 `uni-createInnerAudioContext` [音频](https://doc.dcloud.net.cn/uni-app-x/api/create-inner-audio-context.html)模块。
++ 【内置模块】新增 `uni-chooseLocation` [使用地图选择位置](https://doc.dcloud.net.cn/uni-app-x/api/choose-location.html)模块。
++ 【内置模块】`uni-getLocation-system` 模块调整为 `uni-getLocation` 定位模块，支持 `腾讯定位` 和 `系统定位`。
++ 【内置模块】`uni-cloudClient` 依赖模块新增 `uni-map-tencent`。
++ 【其他模块】新增 `uni-map-tencent` [map地图组件](https://doc.dcloud.net.cn/uni-app-x/component/map.html) 模块。
++ 【其他模块】`uni-ad` 新增同步支持官方最新聚合平台。
++ 新增【模块服务商配置参数】，用来设置模块里面需要的服务商秘钥等信息。
++ 优化打包UI界面展示，对齐官方模块文档。
++ 插件可视化界面新增 `插件自动发行本地资源` ，勾选后每次打包时都会自动调用cli的发行本地资源命令
+	+ 注意：该选项为实验性特性，如果开启后打包失败请关闭后重新打包。
++ 新增支持自动替换项目根目录的 `AndroidManifest.xml`，插件会把项目根目录的该文件替换到 `app` 主模块下面，插件默认的配置代码如下：
+
+	```
+	<?xml version="1.0" encoding="utf-8"?>
+	<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+	    xmlns:tools="http://schemas.android.com/tools">
+	
+	    <uses-permission android:name="android.permission.INTERNET" />
+	    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+	
+	    <application
+	        android:allowBackup="true"
+	        android:dataExtractionRules="@xml/data_extraction_rules"
+	        android:fullBackupContent="@xml/backup_rules"
+	        android:icon="@mipmap/ic_launcher"
+	        android:label="@string/app_name"
+	        android:roundIcon="@mipmap/ic_launcher_round"
+	        android:supportsRtl="true"
+			android:theme="@style/Theme.AppCompat.NoActionBar"
+			tools:replace="android:allowBackup,android:theme"
+	        tools:targetApi="31">
+	        <activity android:name="io.dcloud.uniapp.UniAppActivity" android:configChanges="orientation|keyboard|keyboardHidden|smallestScreenSize|screenLayout|screenSize|mcc|mnc|fontScale|navigation|uiMode" android:exported="true" android:screenOrientation="portrait" android:theme="@style/UniAppX.Activity.DefaultTheme" android:windowSoftInputMode="adjustResize" tools:replace="android:exported,android:theme,android:configChanges,android:windowSoftInputMode,android:screenOrientation">
+	            <intent-filter>
+	                <action android:name="android.intent.action.MAIN" />
+	
+	                <category android:name="android.intent.category.LAUNCHER" />
+	            </intent-filter>
+	        </activity>
+	    </application>
+	</manifest>
+	```
+	
+	+ 注意：该操作需要非常谨慎，建议仔细核对好上面的配置后再自行和自己的配置做合并后再继续。
+
++ 优化其他已知问题。
+
 ## 1.0.28 (2024-11-21)
 + 修复 `webview` 模块打包后无法正常运行的问题。
 + 优化其他已知问题。
