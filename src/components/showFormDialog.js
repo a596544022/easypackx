@@ -155,7 +155,7 @@ async function showFormDialog(context) {
 			if (configuration.get('kux-easy-pack-hxp.autoPublishAppResource') == true) {
 				// const projectName = await (await getActiveProject()).uri.name;
 				executeCliCommand(getCliDir(), ['publish', '--platform', 'APP', '--type', 'appResource',
-					'--project', projectPath, '--host', 'HBuilderX'
+					'--project', projectPath
 				], (error, code) => {
 					if (error) {
 						output.error(`自动生成本地资源失败：${error}`);
@@ -194,7 +194,6 @@ async function showFormDialog(context) {
 				// ws.send('收到消息：' + message);
 				const msg = JSON.parse(message)
 				if (msg.type === 'confirm') {
-					console.log(msg);
 					outputChannel.show();
 					localCache.set('repositoryUrl', msg.data.repositoryUrl);
 					localCache.set('uniName', msg.data.uniName);
