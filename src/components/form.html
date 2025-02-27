@@ -74,14 +74,18 @@
 		<div class="lwu-w-full divider lwu-h-px lwu-mt-3"></div>
 	</div>
 	<div class="lwu-mt-3 lwu-font-semibold">
-		<div class="text-base">Android离线打包SDK下载地址</div>
-		<input v-model="data.sdkDownloadUrl" type="text" placeholder="请输入uni-app x Android离线打包SDK下载地址"
+		<div class="text-base">Android离线打包SDK地址</div>
+		<input v-model="data.sdkDownloadUrl" type="text" placeholder="请输入uni-app x Android离线打包SDK地址"
 			class="lwu-border-none lwu-flex-1 lwu-mt-3 lwu-w-full" />
 		<div class="lwu-w-full divider lwu-h-px lwu-mt-6"></div>
 		<div class="lwu-bg-grey-0 lwu-grey-6 lwu-p-3 lwu-rounded-sm lwu-mt-3">
 			<div class=" lwu-grey-6">
-				<span>请输入uniapp x Andorid离线打包SDK下载地址。</span>
+				<span>1、请输入uniapp x Andorid离线打包SDK下载地址。</span>
 				<a href="https://doc.dcloud.net.cn/uni-app-x/native/download/android.html" class="text-primary">查看详情</a>
+			</div>
+			<div class=" lwu-grey-6">
+				<span>2、如果是本地地址请填写本地的SDK路径，支持压缩包路径和解压后的目录路径</span>
+				<!-- <a href="https://doc.dcloud.net.cn/uni-app-x/native/download/android.html" class="text-primary">查看详情</a> -->
 			</div>
 		</div>
 	</div>
@@ -675,6 +679,41 @@
 					label: 'uni-chooseLocation',
 					value: false,
 					desc: [`${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/choose-location.html', '使用地图选择位置')}模块（${buildTag('HBuilderX4.33+')}）`, `包括API：${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/choose-location.html', 'uni.chooseLocation')}`, `依赖的模块：uni-getLocation、uni-cloud-client`]
+				},
+				{
+					label: 'uni-getBackgroundAudioManager',
+					value: false,
+					desc: [`${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/get-background-audio-manager.html', '背景音频')}模块（${buildTag('HBuilderX4.41+')}）`, `包括API：${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/get-background-audio-manager.html#getbackgroundaudiomanager')}`, `依赖的模块：uni-network`]
+				},
+				{
+					label: 'uni-actionSheet',
+					value: true,
+					desc: [`${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/show-action-sheet.html', '弹出操作菜单')}模块`, `包括API：${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/show-action-sheet.html#showactionsheet', 'uni.showActionSheet')}、${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/show-action-sheet.html#hideactionsheet', 'uni.hideActionSheet')}`]
+				},
+				{
+					label: 'uni-previewImage',
+					value: true,
+					desc: [`${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/preview-image.html', '图片预览')}模块（${buildTag('HBuilderX3.9+')}）`, `包括API：${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/preview-image.html', 'uni.previewImage')}`, `依赖的模块：uni-media、uni-network、uni-fileSystemManager、uni-storage、uni-prompt、uni-actionSheet`]
+				},
+				{
+					label: 'uni-chooseMedia',
+					value: true,
+					desc: [`${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/choose-media.html', '拍摄或从手机相册中选择图片或视频')}模块（${buildTag('HBuilderX4.18+')}）`, `包括API：${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/choose-media.html#choosemedia', 'uni.chooseMedia')}`, `依赖的模块：uni-actionSheet`]
+				},
+				{
+					label: 'uni-arrayBufferToBase64',
+					value: false,
+					desc: [`${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/base64.html#arraybuffertobase64', 'arrayBufferToBase64')}模块（${buildTag('HBuilderX4.0+')}）`, `包括API：${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/base64.html#arraybuffertobase64', 'uni.arrayBufferToBase64')}`]
+				},
+				{
+					label: 'uni-base64ToArrayBuffer',
+					value: false,
+					desc: [`${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/base64.html#base64toarraybuffer', 'base64ToArrayBuffer')}模块（${buildTag('HBuilderX4.0+')}）`, `包括API：${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/base64.html#base64toarraybuffer', 'uni.base64ToArrayBuffer')}`]
+				},
+				{
+					label: 'uni-sse',
+					value: false,
+					desc: [`sse模块`]
 				}
 			]);
 			const uniAd = reactive({

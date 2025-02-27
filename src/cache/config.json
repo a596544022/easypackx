@@ -1,0 +1,16 @@
+{
+  "moduleConfig": {
+    "uni-createWebviewContext": {},
+    "uni-getLocation": {
+      "system": {}
+    },
+    "uni-getNetworkType": {},
+    "uni-media": {},
+    "uni-network": {},
+    "uni-privacy": {},
+    "uni-actionSheet": {},
+    "uni-previewImage": {},
+    "uni-video": {}
+  },
+  "saveLocalConfig": true
+}

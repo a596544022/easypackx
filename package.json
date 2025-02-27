@@ -3,7 +3,7 @@
 	"name": "kux-easy-pack-hxp",
 	"description": "一个用来给 `uniapp/x` 打包自定义调试基座的插件，为了大幅度简化离线打包流程，让更多开发者们享受到离线打包自定义基座的丝滑体验。",
 	"displayName": "kux-easy-pack-hxp 方便快捷高效离线打包插件",
-	"version": "1.0.30",
+	"version": "1.0.31",
 	"publisher": "kux",
 	"engines": {
 		"HBuilderX": "^4.18.0"
@@ -85,6 +85,10 @@
 					"type": "boolean",
 					"default": false,
 					"description": "插件自动发行本地资源，勾选后每次打包时都会自动调用cli的发行本地资源命令"
+				},
+				"kux-easy-pack-hxp.customSDKPath": {
+					"type": "string",
+					"description": "自定义项目SDK路径。选择自己下载解压后的SDK目录路径"
 				}
 			}
 		},

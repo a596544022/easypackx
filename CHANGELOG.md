@@ -1,3 +1,16 @@
+## 1.0.31 (2025-02-27)
++ 【内置模块】新增 `uni-getBackgroundAudioManager` 背景音频模块。
++ 【内置模块】新增 `uni-actionSheet` 弹出操作菜单模块。
++ 【内置模块】新增 `uni-previewImage` 图片预览模块。
++ 【内置模块】新增 `uni-chooseMedia` 拍摄或从手机相册中选择图片或视频模块。
++ 【内置模块】新增 `uni-arrayBufferToBase64` arrayBufferToBase64模块。
++ 【内置模块】新增 `uni-base64ToArrayBuffer` base64ToArrayBuffer模块。
++ 【内置模块】新增 `uni-sse` sse模块。
++ 插件可视化界面新增 `自定义项目SDK路径`。选择自己下载解压后的SDK目录路径
++ `Android离线打包SDK地址` 新增支持本地SDK路径，支持压缩包或者解压后的目录。
++ 修复 `4.53` SDK解压异常问题。
++ 优化其他已知问题。
+
 ## 1.0.30 (2024-12-06)
 + 修复开启 `插件自动发行本地资源` 后打包提示 `不支持host参数` 问题。
 

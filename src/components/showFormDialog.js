@@ -220,7 +220,8 @@ async function showFormDialog(context) {
 							storePassword: msg.data.storeForm.storePassword,
 							keyAlias: msg.data.storeForm.keyAlias,
 							keyPassword: msg.data.storeForm.keyPassword,
-							uniappxNativeAndroid: configuration.get("kux-easy-pack-hxp.uniappxNativeAndroid")
+							uniappxNativeAndroid: configuration.get("kux-easy-pack-hxp.uniappxNativeAndroid"),
+							customSDKPath: configuration.get("kux-easy-pack-hxp.customSDKPath")
 						})
 					})
 				}
@@ -313,7 +314,7 @@ async function showFormDialog(context) {
 			}))
 			ws.send(JSON.stringify({
 				type: 'sdkDownloadUrl',
-				data: localCache.get('sdkDownloadUrl') ?? configuration.get(
+				data: localCache.get('sdkDownloadUrl') ?? configuration.get('kux-easy-pack-hxp.customSDKPath') ?? configuration.get(
 					'kux-easy-pack-hxp.sdkDownloadUrl'
 				)
 			}))
@@ -368,7 +369,8 @@ async function showFormDialog(context) {
 					storePassword: msg.data.storeForm.storePassword,
 					keyAlias: msg.data.storeForm.keyAlias,
 					keyPassword: msg.data.storeForm.keyPassword,
-					uniappxNativeAndroid: configuration.get("kux-easy-pack-hxp.uniappxNativeAndroid")
+					uniappxNativeAndroid: configuration.get("kux-easy-pack-hxp.uniappxNativeAndroid"),
+					customSDKPath: configuration.get("kux-easy-pack-hxp.customSDKPath")
 				})
 			})
 		}
