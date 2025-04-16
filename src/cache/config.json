@@ -2,7 +2,8 @@
   "moduleConfig": {
     "uni-createWebviewContext": {},
     "uni-getLocation": {
-      "system": {}
+      "system": {},
+      "tencent": {}
     },
     "uni-getNetworkType": {},
     "uni-media": {},
