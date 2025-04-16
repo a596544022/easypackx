@@ -1,3 +1,7 @@
+## 1.0.32 (2025-04-16)
++ 修复 `uni-getLocation` 模块在 `4.61` 编译器适配问题。
++ 优化其他已知问题。
+
 ## 1.0.31 (2025-02-27)
 + 【内置模块】新增 `uni-getBackgroundAudioManager` 背景音频模块。
 + 【内置模块】新增 `uni-actionSheet` 弹出操作菜单模块。
