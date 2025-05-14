@@ -713,7 +713,32 @@
 				{
 					label: 'uni-sse',
 					value: false,
-					desc: [`sse模块`]
+					desc: [`sse模块（${buildTag('HBuilderX4.51+')}）`, `包括API：${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/connect-event-source.html#connecteventsource', 'uni.connectEventSource')}`]
+				},
+				{
+					label: 'uni-modal',
+					value: true,
+					desc: [`${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/modal.html', '模态弹窗')}模块`, `包括API：${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/modal.html#showmodal', 'uni.showModal')}、${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/modal.html#hidemodal', 'uni.hideModal')}`]
+				},
+				{
+					label: 'uni-camera',
+					value: false,
+					desc: [`${buildHref('https://doc.dcloud.net.cn/uni-app-x/component/camera.html#camera', '相机组件')}模块（${buildTag('HBuilderX4.61+')}）`, '依赖的模块：uni-media']
+				},
+				{
+					label: 'uni-requestMerchantTransfer',
+					value: false,
+					desc: [`${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/request-merchant-transfer.html#requestmerchanttransfer', '转账确认收款')}模块（${buildTag('HBuilderX4.61+')}）`, `包括API：${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/request-merchant-transfer.html#requestmerchanttransfer', 'uni.requestMerchantTransfer')}`],
+				},
+				{
+					label: 'uni-recoder',
+					value: false,
+					desc: [`${buildHref(`https://doc.dcloud.net.cn/uni-app-x/api/get-recorder-manager.html`, '录音')}模块（${buildTag('HBuilderX4.61+')}）`, `包括API：${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/get-recorder-manager.html#getrecordermanager', 'uni.getRecorderManager')}`]
+				},
+				{
+					label: 'uni-makePhoneCall',
+					value: false,
+					desc: [`${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/make-phone-call.html', '拨打电话')}模块（${buildTag('HBuilderX4.63+')}）`, `包括API：${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/make-phone-call.html#makephonecall', 'uni.makePhoneCall')}`]
 				}
 			]);
 			const uniAd = reactive({
