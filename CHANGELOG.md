@@ -1,3 +1,11 @@
+## 1.0.33 (2025-05-14)
++ 【内置模块】新增 `uni-modal` [模态弹窗](https://doc.dcloud.net.cn/uni-app-x/api/modal.html)模块。
++ 【内置模块】新增 `uni-camera` [相机组件](https://doc.dcloud.net.cn/uni-app-x/component/camera.html#camera)模块。
++ 【内置模块】新增 `uni-requestMerchantTransfer` [转账确认收款](https://doc.dcloud.net.cn/uni-app-x/api/request-merchant-transfer.html#requestmerchanttransfer)模块。
++ 【内置模块】新增 `uni-recorder` [录音](https://doc.dcloud.net.cn/uni-app-x/api/get-recorder-manager.html)模块。
++ 【内置模块】新增 `uni-makePhoneCall` [拨打电话](https://doc.dcloud.net.cn/uni-app-x/api/make-phone-call.html)模块。
++ 优化打包自动添加被依赖模块。
+
 ## 1.0.32 (2025-04-16)
 + 修复 `uni-getLocation` 模块在 `4.61` 编译器适配问题。
 + 优化其他已知问题。
