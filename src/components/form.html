@@ -69,7 +69,16 @@
 				<el-radio value="2">
 					<span>正式发行包</span>
 				</el-radio>
+				<el-radio value="3">
+					<span>仅生成原生工程</span>
+				</el-radio>
 			</el-radio-group>
+		</div>
+		<div v-if="data.packType == 3" class="lwu-bg-grey-0 lwu-grey-6 lwu-p-3 lwu-rounded-sm lwu-mt-3">
+			<div class=" lwu-grey-6">
+				<span>只会构建一个原生工程，并不会自动打包。可以自己拿着该原生工程到android studio运行自定义打包</span>
+				<!-- <a href="https://doc.dcloud.net.cn/uni-app-x/native/download/android.html" class="text-primary">查看详情</a> -->
+			</div>
 		</div>
 		<div class="lwu-w-full divider lwu-h-px lwu-mt-3"></div>
 	</div>

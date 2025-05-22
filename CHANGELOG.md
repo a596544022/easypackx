@@ -1,3 +1,8 @@
+## 1.0.34 (2025-05-22)
++ 修复 `uni_modules` 插件依赖三方插件时原生工程重复导入依赖的问题。
++ 打包类型新增支持 `仅生成原生工程`。
++ 优化其他已知问题。
+
 ## 1.0.33 (2025-05-14)
 + 【内置模块】新增 `uni-modal` [模态弹窗](https://doc.dcloud.net.cn/uni-app-x/api/modal.html)模块。
 + 【内置模块】新增 `uni-camera` [相机组件](https://doc.dcloud.net.cn/uni-app-x/component/camera.html#camera)模块。

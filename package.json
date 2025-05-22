@@ -3,7 +3,7 @@
 	"name": "kux-easy-pack-hxp",
 	"description": "一个用来给 `uniapp/x` 打包自定义调试基座的插件，为了大幅度简化离线打包流程，让更多开发者们享受到离线打包自定义基座的丝滑体验。",
 	"displayName": "kux-easy-pack-hxp 方便快捷高效离线打包插件",
-	"version": "1.0.33",
+	"version": "1.0.34",
 	"publisher": "kux",
 	"engines": {
 		"HBuilderX": "^4.18.0"

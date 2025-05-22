@@ -2,8 +2,7 @@
   "moduleConfig": {
     "uni-createWebviewContext": {},
     "uni-getLocation": {
-      "system": {},
-      "tencent": {}
+      "system": {}
     },
     "uni-getNetworkType": {},
     "uni-media": {},
@@ -11,7 +10,8 @@
     "uni-privacy": {},
     "uni-actionSheet": {},
     "uni-previewImage": {},
-    "uni-video": {}
+    "uni-video": {},
+    "uni-canvas": {}
   },
   "saveLocalConfig": true
 }
