@@ -1,3 +1,13 @@
+## 1.0.36 (2025-07-14)
++ 【内置模块】新增 `uni-clipboard` [剪切板](https://doc.dcloud.net.cn/uni-app-x/api/clipboard.html)模块。
++ 【内置模块】新增 `uni-keyboard` [键盘](https://doc.dcloud.net.cn/uni-app-x/api/keyboard.html)模块。
++ 【内置模块】新增 `uni-openDocument` [打开文档](https://doc.dcloud.net.cn/uni-app-x/api/open-document.html)模块。
++ 【内置模块】新增 `uni-barcode-scanning` [扫码](https://doc.dcloud.net.cn/uni-app-x/api/scan-code.html)模块。
++ 【内置模块】新增 `uni-scanCode` [扫码](https://doc.dcloud.net.cn/uni-app-x/api/scan-code.html)模块。
++ 【内置模块】新增 `uni-match-media` [匹配检测节点](https://doc.dcloud.net.cn/uni-app-x/component/match-media.html)组件模块。
++ 【内置模块】新增 `uni-rich-text` [富文本](https://doc.dcloud.net.cn/uni-app-x/component/rich-text.html)富文本组件模块。
++ 更新基础依赖。
+
 ## 1.0.35 (2025-06-24)
 + 修复内置模块 `uni-recorder` 拼写为 `uni-recoder` 导致的编译错误。
 
