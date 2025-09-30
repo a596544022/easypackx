@@ -1,3 +1,7 @@
+## 1.0.37 (2025-09-30)
++ 【内置模块】优化支付插件注册
++ 【内置模块】优化金融实人认证模块依赖注册
+
 ## 1.0.36 (2025-07-14)
 + 【内置模块】新增 `uni-clipboard` [剪切板](https://doc.dcloud.net.cn/uni-app-x/api/clipboard.html)模块。
 + 【内置模块】新增 `uni-keyboard` [键盘](https://doc.dcloud.net.cn/uni-app-x/api/keyboard.html)模块。
