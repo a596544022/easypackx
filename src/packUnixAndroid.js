@@ -1,31 +1,24 @@
 let hx = require('hbuilderx');
 const fs = require('fs');
-const {
-	start
-} = require('./kux-easy-pack/src/pack');
-const { arrayRemove } = require('./utils');
+const { DEFAULT_ANDROID_SDK_URL } = require('./utils');
+const { resolveJavaHome } = require('./utils/checkEnv');
+const { getPackStart } = require('./utils/easypackxCore');
 const NodeCache = require('node-cache');
 const localCache = new NodeCache();
+const JAVA_HOME_CONFIG_KEYS = [
+	'easypackx.javaHome',
+	'uts-development-android.javaHome'
+];
 
-const repositoryUrlItem = {
-	type: 'textEditor',
-	name: 'repositoryUrl',
-	title: '原生工程仓库地址',
-	placeholder: '请输入原生工程仓库地址',
-	text: hx.workspace.getConfiguration().get('kux-easy-pack-hxp.repositoryUrl') ?? ''
-};
-
-function buildTag (content) {
-	return `<span style="background: #F5F5F5;padding: 3px 6px;border-radius: 5px;"> ${content} </span>`;
+function getFirstConfiguration(configuration, keys) {
+	for (const key of keys) {
+		const value = configuration.get(key);
+		if (value) {
+			return value;
+		}
+	}
+	return '';
 }
-const repositoryUrlDescItem = {
-	type: 'label',
-	name: 'repositoryUrlDesc',
-	text: `1、请 ${buildTag('fork')}<a href="https://github.com/kviewui/uniappx-native-android">uniappx-native-android</a>项目到自己的 github 仓库。<br/>2、填写自己 ${buildTag('fork')} 后的仓库地址。<br/>3、请填写ssh协议格式，示例：${buildTag('git@github.com:kviewui/uniappx-native-android.git')}`,
-	canSelect: true
-};
-
-const widgetGroupCloudItems = [repositoryUrlItem, repositoryUrlDescItem];
 
 const androidLocalSdkItem = {
 	type: 'fileSelectInput',
@@ -33,7 +26,7 @@ const androidLocalSdkItem = {
 	label: '安卓SDK位置',
 	placeholder: '请输入本地安装的安卓SDK位置',
 	mode: 'folder',
-	value: hx.workspace.getConfiguration().get('uts-development-android.sdkDir') ?? ''
+	value: hx.workspace.getConfiguration().get('easypackx.sdkDir') ?? hx.workspace.getConfiguration().get('uts-development-android.sdkDir') ?? ''
 };
 
 const javaHomeItem = {
@@ -42,7 +35,7 @@ const javaHomeItem = {
 	label: 'JDK路径',
 	placeholder: '请输入本地安装的JDK路径，如安装了android studio，则一般为 %安装路径%\\jbr。如未填写则以gradlew默认配置为准。',
 	mode: 'folder',
-	value: hx.workspace.getConfiguration().get('kux-easy-pack-hxp.javaHome') ?? ''
+	value: ''
 }
 
 const javaHomeDescItem = {
@@ -66,8 +59,8 @@ const moduleItem = {
  */
 function getUIData(options) {
 	let uiData = {
-		title: "kux自定义打包",
-		subtitle: "请填写打包前的必要配置内容",
+		title: "EasyPackX",
+		subtitle: "请填写构建前的必要配置内容",
 		formItems: [{
 				type: "fileSelectInput",
 				name: "uniName",
@@ -77,26 +70,11 @@ function getUIData(options) {
 				value: options.uniName
 			},
 			{
-				type: "radioGroup",
-				name: "packType",
-				label: "打包方式",
-				items: [{
-						label: "Github自动打包",
-						id: "github"
-					},
-					{
-						label: "本地自动打包",
-						id: "local"
-					}
-				],
-				value: 'local'
-			},
-			{
 				type: "textEditor",
 				name: "sdkDownloadUrl",
 				title: "Android离线打包SDK下载地址",
 				placeholder: "请输入uni-app x Android离线打包SDK下载地址",
-				text: hx.workspace.getConfiguration().get('kux-easy-pack-hxp.sdkDownloadUrl') ?? "https://web-ext-storage.dcloud.net.cn/uni-app-x/sdk/Android/Android-uni-app-x-SDK@12683-4.36.zip"
+				text: hx.workspace.getConfiguration().get('easypackx.sdkDownloadUrl') ?? DEFAULT_ANDROID_SDK_URL
 			},
 			{
 				type: "label",
@@ -105,11 +83,7 @@ function getUIData(options) {
 			}
 		]
 	}
-	if (options.packType === 'github') {
-		uiData.formItems.push(...widgetGroupCloudItems);
-	} else {
-		uiData.formItems.push(...widgetGroupLocalItems);
-	}
+	uiData.formItems.push(...widgetGroupLocalItems);
 	return uiData;
 };
 
@@ -129,10 +103,11 @@ function getFolderByPath (filePath) {
 
 async function showFormDialog(context) {
 	// console.log((await hx.window.getActiveTextEditor()).document.workspaceFolder);
+	const configuration = hx.workspace.getConfiguration();
+	javaHomeItem.value = await resolveJavaHome(getFirstConfiguration(configuration, JAVA_HOME_CONFIG_KEYS), 17);
 	let options = {
 		pickType: 'local',
-		uniName: '',
-		repositoryUrl: localCache.get('repositoryUrl') ?? hx.workspace.getConfiguration().get('kux-easy-pack-hxp.repositoryUrl')
+		uniName: ''
 	}
 	
 	const activeEditor = await hx.window.getActiveTextEditor();
@@ -160,48 +135,27 @@ async function showFormDialog(context) {
 				this.showError("项目位置不能为空，请填写");
 				return false;
 			};
-			if (formData.packType === 'github' && !formData.repositoryUrl) {
-				this.showError("选择云端打包时原生工程地址不能为空，请填写");
-				return false;
-			}
-			if (formData.packType === 'local' && !formData.androidLocalSdk) {
-				this.showError("选择本地打包时安卓SDK地址不能为空，请填写");
+			if (!formData.androidLocalSdk) {
+				this.showError("安卓SDK地址不能为空，请填写");
 				return false;
 			}
 			return true;
 		},
 		onOpened: function() {},
-		onChanged: function(field, value) {
-			options.pickType = value;
-			if (field == "packType") {
-				let updateData = getUIData(options);
-				if (value === 'github') {
-					// 删除本地打包选项
-					updateData.formItems = arrayRemove(updateData.formItems, androidLocalSdkItem);
-					widgetGroupCloudItems[0].text = options.repositoryUrl;
-					updateData.formItems.push(...widgetGroupCloudItems);
-				} else {
-					// 删除云端打包选项
-					updateData.formItems = arrayRemove(updateData.formItems, repositoryUrlItem);
-					updateData.formItems = arrayRemove(updateData.formItems, repositoryUrlDescItem);
-					updateData.formItems.push(...widgetGroupLocalItems);
-				}
-				this.updateForm(updateData);
-			};
-		}
+		onChanged: function() {}
 	}).then(async (res) => {
-		const outputChannel = hx.window.createOutputChannel('kux自定义打包');
+		const outputChannel = hx.window.createOutputChannel('EasyPackX');
 		outputChannel.show();
 		try {
-			localCache.set('repositoryUrl', res.repositoryUrl);
 			localCache.set('uniName', res.uniName);
+			const start = getPackStart(context.extensionPath);
 			await start({
-				localPack: res.packType === 'local',
+				localPack: true,
 				uniappProjectPath: res.uniName,
 				allowClone: true,
-				root: `${context.extensionPath}/src/kux-easy-pack`,
+				root: `${context.extensionPath}/src/easypackx`,
 				androidLocalSdk: res.androidLocalSdk,
-				customConsoleLog: outputChannel.appendLine,
+				customConsoleLog: outputChannel.appendLine.bind(outputChannel),
 				customSetStatusMessage: hx.window.setStatusBarMessage,
 				hx: hx,
 				...res

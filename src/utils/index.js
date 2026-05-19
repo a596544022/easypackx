@@ -1,7 +1,9 @@
 const md = require("./markdown");
+const path = require("path");
 const { executeCliCommand } = require('./execute');
 const { getActiveProject, hx } = require('./hx');
 const { output, colors } = require('./output');
+const { DEFAULT_ANDROID_SDK_URL } = require('./constants');
 
 function arrayRemove(arr, elementOrIndex) {
 	// 检查是否是数字（索引）
@@ -41,7 +43,14 @@ function getContentBeforeSubstring(str, substr) {
  */
 function getCliDir() {
 	if (process.platform === 'darwin') {
-		return `${getContentBeforeSubstring(hx.env.appRoot, '/Contents/HBuilderX')}/Contents/MacOS/`;
+		const appRoot = hx.env.appRoot ?? '';
+		const appBundleRoot = getContentBeforeSubstring(appRoot, '/Contents/HBuilderX');
+		if (appBundleRoot) {
+			return path.join(appBundleRoot, 'Contents', 'MacOS');
+		}
+
+		// 兼容 HBuilderX 未来调整 appRoot 的情况，优先回退到当前 appRoot 旁边的 MacOS 目录。
+		return path.join(appRoot, '..', 'MacOS');
 	}
 	
 	return `${hx.env.appRoot}`;
@@ -56,5 +65,6 @@ module.exports = {
 	hx,
 	getActiveProject,
 	output,
-	colors
+	colors,
+	DEFAULT_ANDROID_SDK_URL
 }

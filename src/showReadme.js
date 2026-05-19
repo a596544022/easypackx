@@ -18,7 +18,7 @@ async function showReadme(webviewPanel, context) {
 			<article class="markdown-body">
 				${await mark2html(content)}
 			</article>
-		<body>
+		</body>
 		<script>
 			window.onload = function () {
 				document.addEventListener('click', function (event) {

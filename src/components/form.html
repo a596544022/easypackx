@@ -35,7 +35,21 @@
 <link rel="stylesheet" href="https://s4.zstatic.net/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/material-darker.min.css" integrity="sha512-2OhXH4Il3n2tHKwLLSDPhrkgnLBC+6lHGGQzSFi3chgVB6DJ/v6+nbx+XYO9CugQyHVF/8D/0k3Hx1eaUK2K9g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <link rel="stylesheet" href="https://s4.zstatic.net/ajax/libs/codemirror/5.65.2/theme/material-darker.min.css" integrity="sha512-2OhXH4Il3n2tHKwLLSDPhrkgnLBC+6lHGGQzSFi3chgVB6DJ/v6+nbx+XYO9CugQyHVF/8D/0k3Hx1eaUK2K9g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-<div id="app" class="lwu-px-3">
+<div id="app" class="app-shell">
+	<div class="app-header">
+		<div class="brand-block">
+			<div class="brand-mark">EX</div>
+			<div>
+				<div class="header-kicker">Android offline build</div>
+				<h1 class="header-title">EasyPackX</h1>
+				<p class="header-subtitle">配置项目、环境、签名和模块参数后开始构建。</p>
+			</div>
+		</div>
+		<div class="header-meta">
+			<span class="status-pill">本地构建优先</span>
+			<span class="status-pill muted">HBuilderX 插件</span>
+		</div>
+	</div>
 	<div>
 		<div class="lwu-flex lwu-items-center lwu-text-sm lwu-w-full lwu-font-semibold">
 			<div class="text-base">项目位置</div>
@@ -47,15 +61,8 @@
 	</div>
 	<div>
 		<div class="lwu-flex lwu-justify-between lwu-mt-3 lwu-text-sm lwu-font-semibold lwu-items-center">
-			<div class="text-base">打包方式</div>
-			<el-radio-group v-model="type" @change="onChangeType">
-				<el-radio value="1">
-					<span>Github自动打包</span>
-				</el-radio>
-				<el-radio value="2">
-					<span>本地自动打包</span>
-				</el-radio>
-			</el-radio-group>
+			<div class="text-base">构建方式</div>
+			<span class="status-pill">本地构建</span>
 		</div>
 		<div class="lwu-w-full divider lwu-h-px lwu-mt-3"></div>
 	</div>
@@ -76,7 +83,7 @@
 		</div>
 		<div v-if="data.packType == 3" class="lwu-bg-grey-0 lwu-grey-6 lwu-p-3 lwu-rounded-sm lwu-mt-3">
 			<div class=" lwu-grey-6">
-				<span>只会构建一个原生工程，并不会自动打包。可以自己拿着该原生工程到android studio运行自定义打包</span>
+				<span>只会生成原生工程，不会继续构建安装包。可以在 Android Studio 中打开该工程自行调试或构建。</span>
 				<!-- <a href="https://doc.dcloud.net.cn/uni-app-x/native/download/android.html" class="text-primary">查看详情</a> -->
 			</div>
 		</div>
@@ -224,13 +231,28 @@
 					<div class="lwu-my-3 lwu-w-full" id="storePath">
 						<div class="lwu-flex lwu-items-center lwu-text-sm lwu-w-full lwu-font-semibold">
 							<!-- <span class="lwu-text-base">证书库文件路径</span> -->
-							<input v-model="data.storeForm.storePath" type="text" placeholder="请输入keystore证书路径" class="lwu-border-none lwu-flex-1 lwu-mx-3" />
+							<el-select
+								v-model="data.storeForm.storePath"
+								filterable
+								allow-create
+								clearable
+								default-first-option
+								placeholder="请选择或输入keystore证书路径"
+								class="lwu-flex-1 lwu-mx-3"
+							>
+								<el-option
+									v-for="item of certificateFiles"
+									:key="item.value"
+									:label="item.label"
+									:value="item.value"
+								/>
+							</el-select>
 							<!-- <span class="text-primary cursor-pointer">浏览</span> -->
 						</div>
-						<!-- <div class="lwu-bg-grey-0 lwu-grey-7 lwu-p-3 lwu-mt-3 lwu-rounded-sm">
-							<div>请输入android studio安装目录中的jbr路径。(示例：%安装路径%/jbr)</div>
-							<div>如果未填写，以系统环境变量设置为准。(如果未设置系统环境变量则打包失败)</div>
-						</div> -->
+						<div class="lwu-bg-grey-0 lwu-grey-7 lwu-p-3 lwu-mt-3 lwu-rounded-sm">
+							<div v-if="certificateFiles.length > 0">已从当前项目根目录识别到 {{ certificateFiles.length }} 个证书文件，可直接选择。</div>
+							<div v-else>当前项目根目录未识别到 .keystore、.jks、.p12、.pfx 或 .ks 文件，可手动输入证书路径。</div>
+						</div>
 						<div class="lwu-w-full divider lwu-h-px lwu-mt-3"></div>
 					</div>
 				</el-form-item>
@@ -290,19 +312,6 @@
 			<div class="lwu-w-full divider lwu-h-px lwu-mt-3"></div>
 		</div>
 	</div>
-	<div class="lwu-mt-6 lwu-font-semibold" v-if="type == 1">
-		<div class="text-base">原生工程仓库地址</div>
-		<input v-model="data.repositoryUrl" type="text" placeholder="请输入原生工程仓库地址" class="lwu-border-none lwu-flex-1 lwu-mt-3 lwu-w-full" />
-		<div class="lwu-w-full divider lwu-h-px lwu-mt-6"></div>
-		<div class="lwu-bg-grey-0 lwu-grey-6 lwu-p-3 lwu-rounded-sm lwu-mt-3">
-			<div class=" lwu-grey-6">
-				<span>请</span>
-				<span class="lwu-bg-grey-1 lwu-px-1 lwu-rounded-xs lwu-mx-1">fork</span>
-				<a href="https://github.com/kviewui/uniappx-native-android" class="text-primary">uniappx-native-android</a>
-				<span>项目到自己的github仓库，然后填写自己的仓库地址，注意需要ssh协议。（示例：git@github.com:xxx/uniappx-native-android.git)</span>
-			</div>
-		</div>
-	</div>
 	<div class="lwu-mt-6">
 		<div class="lwu-flex lwu-flex-col">
 			<div class="lwu-font-semibold text-base">模块配置</div>
@@ -328,9 +337,9 @@
 			<div class="lwu-w-full divider lwu-h-px lwu-mt-6"></div>
 			<div class="lwu-flex lwu-items-center lwu-mt-3">
 				<div class="bg-primary lwu-h-6 lwu-w-2 lwu-rounded-full lwu-mr-2"></div>
-				<div class="lwu-font-semibold text-base">内置模块</div>
+				<div class="lwu-font-semibold text-base">需手动配置的内置模块</div>
 			</div>
-			<div v-for="item of buildInModules">
+			<div v-for="item of manualBuildInModules">
 				<div class="lwu-flex lwu-items-center lwu-mt-3">
 					<el-checkbox v-model="item.value" @change="() => onChangeBuildInModules(item)" />
 					<div class="text-lg lwu-mr-6">{{ item.label }}</div>
@@ -374,9 +383,9 @@
 			<!-- <div class="lwu-w-full divider lwu-h-px lwu-mt-6"></div> -->
 			<div class="lwu-flex lwu-items-center lwu-mt-3">
 				<div class="bg-primary lwu-h-6 lwu-w-2 lwu-rounded-full lwu-mr-2"></div>
-				<div class="lwu-font-semibold text-base">其他模块</div>
+				<div class="lwu-font-semibold text-base">需手动配置的其他模块</div>
 			</div>
-			<div v-for="item of otherModules">
+			<div v-for="item of manualOtherModules">
 				<div class="lwu-flex lwu-items-center lwu-mt-3">
 					<el-checkbox v-model="item.value" />
 					<div class="text-lg lwu-mr-6">{{ item.label }}</div>
@@ -519,6 +528,7 @@
 		setup({ refs }) {
 			const type = ref('2');
 			const uniNames = ref([]);
+			const certificateFiles = ref([]);
 			const buildTag = (content) => {
 				return `<span class="bg-warning-1 text-warning lwu-px-2 lwu-rounded-xs">${content}</span>`
 			}
@@ -531,13 +541,12 @@
 				// sdkDownloadUrl: 'https://web-ext-storage.dcloud.net.cn/uni-app-x/sdk/Android-uni-app-x-SDK@11973-4.23.zip',
 				sdkDownloadUrl: '',
 				androidLocalSdk: '',
-				repositoryUrl: '',
 				javaHome: '',
 				autoCheckPackenv: '1',
 				checkAgconnectServicesRes: false,
 				saveLocalConfig: true,
 				storeType: '1',
-				androidPackageName: 'cn.uvuejs.kux',
+				androidPackageName: 'cn.testapp.app',
 				storeForm: {
 					storePath: '',
 					storePassword: '',
@@ -604,11 +613,11 @@
 				// },
 				{
 					label: 'uni-getLocation',
-					value: true,
+					value: false,
 					desc: [`定位模块`, `包括API：${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/get-location.html', 'uni.getLocation')}`, `注意：此模块仅包含定位provider管理功能，需手动配置使用的定位实现模块，详情参考${buildHref('https://doc.dcloud.net.cn/uni-app-x/collocation/manifest-modules.html#uni-getlocation', 'uni-getlocation')}章节`],
 					form: [],
 					formModel: {
-						value: computed(() => buildInModules.value[3].modules.value)
+						value: computed(() => getBuildInModule('uni-getLocation')?.modules?.value ?? [])
 					},
 					formRules: {
 						value: [
@@ -962,8 +971,8 @@
 					],
 					// uniVerifyFormRef: ref(null),
 					formModel: {
-						GETUI_APPID: computed(() => otherModules.value[2].form[0].value),
-						GY_APP_ID: computed(() => otherModules.value[2].form[1].value)
+						GETUI_APPID: computed(() => getUniVerifyFormItem('GETUI_APPID')?.value ?? ''),
+						GY_APP_ID: computed(() => getUniVerifyFormItem('GY_APP_ID')?.value ?? '')
 					},
 					formRules: {
 						GETUI_APPID: [
@@ -980,7 +989,7 @@
 					desc: [`请求支付模块`, `包括API：${buildHref('https://doc.dcloud.net.cn/uni-app-x/api/request-payment.html', 'uni.requestPayment')}`],
 					form: [],
 					formModel: {
-						value: computed(() => otherModules.value[3].modules.value)
+						value: computed(() => getOtherModule('uni-payment')?.modules?.value ?? [])
 					},
 					formRules: {
 						value: [
@@ -1014,6 +1023,15 @@
 					form: []
 				}
 			])
+			const MANUAL_BUILD_IN_MODULES = ['uni-getLocation'];
+			const MANUAL_OTHER_MODULES = [
+				'uni-verify',
+				'uni-payment'
+			];
+			const getBuildInModule = (label) => buildInModules.value.find(item => item.label === label);
+			const getOtherModule = (label) => otherModules.value.find(item => item.label === label);
+			const manualBuildInModules = computed(() => buildInModules.value.filter(item => MANUAL_BUILD_IN_MODULES.includes(item.label)));
+			const manualOtherModules = computed(() => otherModules.value.filter(item => MANUAL_OTHER_MODULES.includes(item.label)));
 			const uniVerifyFormRef = ref(null)
 			const uniPushFormRef = ref(null)
 			const uniPaymentFormRef = ref(null)
@@ -1041,18 +1059,6 @@
 			
 			const beforeSubmit = async () => {
 				let error = false
-				if (!data.localPack) {
-					if (data.repositoryUrl.length == 0) {
-						error = true
-						ElNotification({
-							title: '提示',
-							message: '请填写原生工程仓库地址',
-							type: 'error',
-							duration: 6000
-						})
-						return false
-					}
-				}
 				if (error) return
 				if (data.localPack) {
 					if (data.androidPackageName.length == 0) {
@@ -1183,7 +1189,7 @@
 					}
 					if (parseCode['uni-map-tencent']) {
 						const parseCodeUniMapTencent = parseCode['uni-map-tencent']
-						if (!parseCode['moduleProvider']['TencentLBSAPIKey']) {
+						if (!parseCode['moduleProvider']?.['TencentLBSAPIKey']) {
 							ElNotification({
 								title: '提示',
 								dangerouslyUseHTMLString: true,
@@ -1194,8 +1200,8 @@
 							return false
 						}
 					}
-					if (parseCode['uni-getLocation']['tencent']) {
-						if (!parseCode['moduleProvider']['TencentLBSAPIKey']) {
+					if (parseCode['uni-getLocation']?.['tencent']) {
+						if (!parseCode['moduleProvider']?.['TencentLBSAPIKey']) {
 							ElNotification({
 								title: '提示',
 								dangerouslyUseHTMLString: true,
@@ -1335,6 +1341,7 @@
 
 			const onSelectUniName = (item) => {
 				data.uniName = item.fsPath;
+				requestCertificateFiles();
 			}
 			
 			const onChangeType = (value) => {
@@ -1354,22 +1361,39 @@
 			const onChangeApkChannel = (value) => {
 				data.apkChannelForm.channel = value
 			}
+
+			const requestCertificateFiles = () => {
+				if (ws.readyState !== WebSocket.OPEN || !data.uniName) return;
+				ws.send(JSON.stringify({
+					type: 'scanCertificateFiles',
+					data: {
+						uniName: data.uniName
+					}
+				}));
+			}
 			
 			const onChangeBuildInModules = (item) => {
 				if (item.label === "uni-cloudClient") {
-					buildInModules.value[buildInModules.value.findIndex(item => item.label === 'uni-media')].value = true
-					buildInModules.value[buildInModules.value.findIndex(item => item.label === 'uni-network')].value = true
-					otherModules.value[otherModules.value.findIndex(item => item.label === 'uni-map-tencent')].value = true
+					const mediaModule = getBuildInModule('uni-media');
+					const networkModule = getBuildInModule('uni-network');
+					const mapModule = getOtherModule('uni-map-tencent');
+					if (mediaModule) mediaModule.value = true;
+					if (networkModule) networkModule.value = true;
+					if (mapModule) mapModule.value = true;
 				}
 				if (item.label === 'uni-chooseLocation') {
-					buildInModules.value[buildInModules.value.findIndex(item => item.label === 'uni-getLocation')].value = true
-					buildInModules.value[buildInModules.value.findIndex(item => item.label === 'uni-cloudClient')].value = true
+					const locationModule = getBuildInModule('uni-getLocation');
+					const cloudModule = getBuildInModule('uni-cloudClient');
+					if (locationModule) locationModule.value = true;
+					if (cloudModule) cloudModule.value = true;
 				}
 			}
 			
 			const initEditor = () => {
 				nextTick(() => {
-					editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
+					const editorTextarea = document.getElementById("code-editor");
+					if (!editorTextarea || editor) return;
+					editor = CodeMirror.fromTextArea(editorTextarea, {
 						lineNumbers: true,
 						mode: "javascript",
 						theme: 'material-darker',
@@ -1403,7 +1427,8 @@
 			}
 			
 			const getUniVerifyFormItem = (label) => {
-				return otherModules.value[2].form[otherModules.value[2].form.indexOf(otherModules.value[2].form.filter(item => item.label === label)[0])]
+				const uniVerifyModule = getOtherModule('uni-verify');
+				return uniVerifyModule?.form.find(item => item.label === label);
 			}
 			
 			const buildUniPushConfig = () => {
@@ -1415,7 +1440,7 @@
 			}
 			
 			const buildModuleJsonConfig = () => {
-				const modules = buildInModules.value.filter(item => item.value === true);
+				const modules = manualBuildInModules.value.filter(item => item.value === true);
 				moduleConfig.value = {}
 				if (modules.length > 0) {
 					modules.map(item => {
@@ -1434,7 +1459,7 @@
 						}
 					})
 				}
-				const otherModulesChecked = otherModules.value.filter(item => item.value === true)
+				const otherModulesChecked = manualOtherModules.value.filter(item => item.value === true)
 				if (otherModulesChecked.length > 0) {
 					otherModulesChecked.map(item => {
 						moduleConfig.value[item.label] = {}
@@ -1464,14 +1489,14 @@
 			}
 			
 			const parseCodeObj = () => {
-				return JSON.parse(editor.getValue());你刚才
+				return JSON.parse(editor.getValue());
 			}
 			
 			const buildNoJsonConfig = (obj) => {
-				buildInModules.value.map((item, index) => {
+				manualBuildInModules.value.map((item) => {
 					item.value = Object.keys(obj).includes(item.label);
 				});
-				otherModules.value.map((module, index) => {
+				manualOtherModules.value.map((module) => {
 					module.value = Object.keys(obj).includes(module.label)
 				})
 				// 判断是否有uni-ad模块
@@ -1485,22 +1510,26 @@
 				if (Object.keys(obj).includes('uni-push')) {
 					uniPush.value = true
 					Object.keys(obj['uni-push']).map(label => {
-						getUniPushFormItem(label).value = obj['uni-push'][label];
+						const formItem = getUniPushFormItem(label);
+						if (formItem) formItem.value = obj['uni-push'][label];
 					})
 				}
 				// 判断是否有uni-verify模块
 				if (Object.keys(obj).includes('uni-verify')) {
 					Object.keys(obj['uni-verify']).map(label => {
-						getUniVerifyFormItem(label).value = obj['uni-verify'][label]
+						const formItem = getUniVerifyFormItem(label);
+						if (formItem) formItem.value = obj['uni-verify'][label]
 					})
 				}
 				// 判断是否有uni-payment模块
 				if (Object.keys(obj).includes('uni-payment')) {
-					otherModules.value[3].modules.value = Object.keys(obj['uni-payment'])
+					const paymentModule = getOtherModule('uni-payment');
+					if (paymentModule?.modules) paymentModule.modules.value = Object.keys(obj['uni-payment'])
 				}
 				// 判断是否有uni-getLocation模块
 				if (Object.keys(obj).includes('uni-getLocation')) {
-					buildInModules.value[3].modules.value = Object.keys(obj['uni-getLocation'])
+					const locationModule = getBuildInModule('uni-getLocation');
+					if (locationModule?.modules) locationModule.modules.value = Object.keys(obj['uni-getLocation'])
 				}
 				if (Object.keys(obj).includes('moduleProvider')) {
 					data.moduleProvider.TencentLBSAPIKey.value = obj['moduleProvider']['TencentLBSAPIKey']
@@ -1518,6 +1547,10 @@
 					const obj = parseCodeObj();
 					buildNoJsonConfig(obj)
 				}
+			});
+
+			watch(() => data.uniName, () => {
+				requestCertificateFiles();
 			});
 			
 			const scrollIntoView = (id) => {
@@ -1587,6 +1620,7 @@
 			ws.onopen = (event) => {
 				console.log('连接已打开', event);
 				// ws.send(JSON.stringify('Hello, Server!'));
+				requestCertificateFiles();
 			}
 			
 			ws.onmessage = (event) => {
@@ -1602,9 +1636,10 @@
 					}
 					if (dataType === 'uniName') {
 						data.uniName = content.data
+						requestCertificateFiles();
 					}
-					if (dataType === 'repositoryUrl') {
-						data.repositoryUrl = content.data
+					if (dataType === 'certificateFiles') {
+						certificateFiles.value = content.data ?? []
 					}
 					if (dataType === 'javaHome') {
 						data.javaHome = content.data
@@ -1649,9 +1684,9 @@
 							return
 						} else {
 							ElMessageBox.confirm(
-								'打包环境检测通过，请继续提交打包',
+								'打包环境检测通过，请继续开始构建',
 								'提示', {
-									confirmButtonText: '提交打包',
+									confirmButtonText: '开始构建',
 									cancelButtonText: '取消',
 									type: 'success',
 								}
@@ -1690,8 +1725,8 @@
 				hbuilderx.onDidReceiveMessage(async (msg) => {
 					if (msg.type == 'DialogButtonEvent') {
 						let button = msg.button;
-						if (button == '提交') {
-							//TODO 处理表单提交
+						if (button == '提交' || button == '开始构建') {
+							// 兼容旧版按钮文案，同时支持新版“开始构建”。
 							let config = buildConfirmConfig()
 							let pass = await beforeSubmit()
 							if (!pass) return
@@ -1755,6 +1790,7 @@
 			return {
 				type,
 				data,
+				certificateFiles,
 				buildInModules,
 				uniAd,
 				uniAdFormRef,
@@ -1771,6 +1807,8 @@
 				moduleConfig,
 				onSubmit,
 				otherModules,
+				manualBuildInModules,
+				manualOtherModules,
 				uniVerifyFormRef,
 				convertToCamelCase,
 				onChangeAutoCheckPackenv,
@@ -1792,10 +1830,133 @@
 
 <style>
 	:root {
-		--color-primary: #55AF70;
-		--el-color-primary: #55AF70;
-		--color-warnig-1: #FCF6ED;
-		--color-warnig: #DCA550;
+		--color-primary: #0f766e;
+		--color-primary-strong: #115e59;
+		--color-primary-soft: #ecfdf5;
+		--color-accent: #2563eb;
+		--color-bg: #f8fafc;
+		--color-panel: #ffffff;
+		--color-panel-soft: #f1f5f9;
+		--color-border: #e2e8f0;
+		--color-text: #0f172a;
+		--color-text-muted: #64748b;
+		--color-warning-1: #fffbeb;
+		--color-warning: #b45309;
+		--shadow-panel: 0 14px 40px rgba(15, 23, 42, .08);
+		--el-color-primary: #0f766e;
+		--el-border-radius-base: 8px;
+		--el-font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	}
+
+	* {
+		box-sizing: border-box;
+	}
+
+	body {
+		margin: 0;
+		background: var(--color-bg);
+		color: var(--color-text);
+		font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+		font-size: 13px;
+		line-height: 1.55;
+	}
+
+	.app-shell {
+		width: min(100%, 820px);
+		margin: 0 auto;
+		padding: 24px;
+	}
+
+	.app-header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 20px;
+		padding: 22px;
+		margin-bottom: 16px;
+		background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+		border: 1px solid var(--color-border);
+		border-radius: 14px;
+		box-shadow: var(--shadow-panel);
+	}
+
+	.brand-block {
+		display: flex;
+		align-items: center;
+		gap: 14px;
+		min-width: 0;
+	}
+
+	.brand-mark {
+		display: grid;
+		place-items: center;
+		width: 42px;
+		height: 42px;
+		flex: 0 0 auto;
+		border-radius: 10px;
+		background: var(--color-primary);
+		color: #ffffff;
+		font-size: 14px;
+		font-weight: 700;
+		letter-spacing: 0;
+	}
+
+	.header-kicker {
+		color: var(--color-primary);
+		font-size: 12px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0;
+	}
+
+	.header-title {
+		margin: 2px 0 4px;
+		font-size: 22px;
+		font-weight: 750;
+		line-height: 1.2;
+		letter-spacing: 0;
+	}
+
+	.header-subtitle {
+		margin: 0;
+		color: var(--color-text-muted);
+		font-size: 13px;
+	}
+
+	.header-meta {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		gap: 8px;
+	}
+
+	.status-pill {
+		display: inline-flex;
+		align-items: center;
+		height: 26px;
+		padding: 0 10px;
+		border: 1px solid #bbf7d0;
+		border-radius: 999px;
+		background: var(--color-primary-soft);
+		color: var(--color-primary-strong);
+		font-size: 12px;
+		font-weight: 650;
+		white-space: nowrap;
+	}
+
+	.status-pill.muted {
+		border-color: var(--color-border);
+		background: #ffffff;
+		color: var(--color-text-muted);
+	}
+
+	#app > div:not(.app-header) {
+		padding: 18px;
+		margin-top: 12px;
+		background: var(--color-panel);
+		border: 1px solid var(--color-border);
+		border-radius: 12px;
+		box-shadow: 0 8px 24px rgba(15, 23, 42, .04);
 	}
 
 	.text-primary {
@@ -1807,62 +1968,167 @@
 	}
 	
 	.bg-warning-1 {
-		background-color: var(--color-warnig-1);
+		background-color: var(--color-warning-1);
 	}
 	
 	.text-warning {
-		color: var(--color-warnig);
+		color: var(--color-warning);
 	}
 
 	.divider {
-		background-color: var(--color-primary);
-		opacity: .5;
-	}
-
-	div {
-		background-color: transparent;
-		font-size: 12px;
+		height: 1px !important;
+		margin-top: 16px !important;
+		background-color: var(--color-border);
+		opacity: 1;
 	}
 
 	.cursor-pointer {
 		cursor: pointer;
 	}
 
-	/* CSS Reset */
-	input {
-		background: none;
-		border: none;
+	/* HBuilderX WebView 中原生 input 也按 Element Plus 的输入框观感统一。 */
+	.app-shell input.lwu-border-none {
+		width: 100%;
+		min-height: 36px;
+		background: #ffffff;
+		border: 1px solid var(--color-border) !important;
+		border-radius: 8px;
 		outline: none;
 		margin: 0;
-		padding: 0;
-		font-size: 14px;
-		/* 根据需要设置字体大小 */
-		color: inherit;
-		/* 文字颜色继承父元素 */
+		padding: 0 12px !important;
+		font-size: 13px;
+		color: var(--color-text);
 		caret-color: var(--color-primary);
+		transition: border-color .18s ease, box-shadow .18s ease;
 	}
 
-	input::placeholder {
-		font-size: 12px;
+	.app-shell input.lwu-border-none:focus {
+		border-color: var(--color-primary);
+		box-shadow: 0 0 0 3px rgba(15, 118, 110, .12);
+	}
+
+	.app-shell input.lwu-border-none::placeholder,
+	.el-input__inner::placeholder {
+		color: #94a3b8;
+		font-size: 13px;
 	}
 
 	a {
 		color: var(--color-primary);
-		font-size: 14px;
+		font-size: 13px;
+		font-weight: 600;
+		text-decoration: none;
 	}
 
-	* {
-		font-size: 13px;
+	a:hover {
+		color: var(--color-primary-strong);
+		text-decoration: underline;
 	}
 
 	.text-base {
+		min-width: 104px;
+		color: var(--color-text);
 		font-size: 14px;
+		font-weight: 700;
 	}
 
 	.text-lg {
-		font-size: 16px;
+		color: var(--color-text);
+		font-size: 14px;
+		font-weight: 700;
 	}
+
+	.lwu-bg-grey-0 {
+		background: var(--color-panel-soft) !important;
+		border: 1px solid var(--color-border);
+		border-radius: 10px !important;
+		color: var(--color-text-muted) !important;
+	}
+
+	.lwu-grey-6,
+	.lwu-grey-7 {
+		color: var(--color-text-muted) !important;
+	}
+
+	.lwu-rounded-sm {
+		border-radius: 10px !important;
+	}
+
+	.el-radio-group,
+	.el-checkbox-group {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px 14px;
+		justify-content: flex-end;
+	}
+
+	.el-radio,
+	.el-checkbox {
+		margin-right: 0 !important;
+	}
+
+	.el-input__wrapper,
+	.el-select__wrapper,
+	.el-autocomplete,
+	.el-autocomplete .el-input {
+		width: 100%;
+	}
+
+	.el-input__wrapper,
+	.el-select__wrapper {
+		min-height: 36px;
+		border-radius: 8px;
+		box-shadow: 0 0 0 1px var(--color-border) inset;
+	}
+
+	.el-input__wrapper.is-focus,
+	.el-select__wrapper.is-focused {
+		box-shadow: 0 0 0 1px var(--color-primary) inset, 0 0 0 3px rgba(15, 118, 110, .12);
+	}
+
+	.el-form-item {
+		margin-bottom: 14px;
+	}
+
+	.el-form-item__label {
+		color: var(--color-text);
+		font-weight: 650;
+	}
+
 	.CodeMirror {
-		border-radius: 10px;
+		border: 1px solid var(--color-border);
+		border-radius: 12px;
+		overflow: hidden;
+		font-size: 13px;
+	}
+
+	@media (max-width: 640px) {
+		.app-shell {
+			padding: 16px;
+		}
+
+		.app-header {
+			flex-direction: column;
+		}
+
+		.header-meta {
+			justify-content: flex-start;
+		}
+
+		.lwu-flex.lwu-justify-between,
+		.lwu-flex.lwu-items-center {
+			align-items: flex-start !important;
+			flex-direction: column;
+			gap: 10px;
+		}
+
+		.text-base {
+			min-width: 0;
+		}
+
+		.el-radio-group,
+		.el-checkbox-group {
+			justify-content: flex-start;
+		}
 	}
 </style>

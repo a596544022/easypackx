@@ -1,4 +1,8 @@
-src/kux-easy-pack
 node_modules
 .DS_Store
 .idea
+**/local.properties
+src/easypackx/node_modules
+src/easypackx/SDK/uniappx/*
+src/easypackx/uniappx-native-android
+src/easypackx/log/*.log

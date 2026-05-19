@@ -1,0 +1,10 @@
+node_modules
+SDK/uniappx/*
+.env
+build
+.DS_Store
+**/.DS_Store
+.idea
+.idea/*
+uniappx-native-android
+log/*.log

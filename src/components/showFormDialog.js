@@ -1,21 +1,119 @@
 const fs = require('fs');
 const hx = require('hbuilderx');
-const {
-	start
-} = require('../kux-easy-pack/src/pack');
 const NodeCache = require('node-cache');
 const {
 	getJavaVersion,
+	resolveJavaHome,
 	checkAndroidHome,
 	checkGradleJavaVersion
 } = require('../utils/checkEnv');
 const path = require('path');
-const {
-	logger
-} = require('../kux-easy-pack/log/logger');
-const { executeCliCommand, getCliDir, getActiveProject, output, colors } = require('../utils');
+const { executeCliCommand, getCliDir, getActiveProject, output, colors, DEFAULT_ANDROID_SDK_URL } = require('../utils');
+const { getPackStart } = require('../utils/easypackxCore');
 const localCache = new NodeCache();
 const WebSocket = require('ws');
+
+let activeWebSocketServer = null;
+const SDK_DIR_CONFIG_KEYS = [
+	'easypackx.sdkDir',
+	'easypackx.androidLocalSdk',
+	'uts-development-android.sdkDir'
+];
+const JAVA_HOME_CONFIG_KEYS = [
+	'easypackx.javaHome',
+	'uts-development-android.javaHome'
+];
+const SDK_DOWNLOAD_URL_CONFIG_KEYS = [
+	'easypackx.sdkDownloadUrl',
+	'easypackx.customSDKPath'
+];
+const CERTIFICATE_EXTENSIONS = new Set(['.keystore', '.jks', '.p12', '.pfx', '.ks']);
+
+function getFirstConfiguration(configuration, keys) {
+	for (const key of keys) {
+		const value = configuration.get(key);
+		if (value) {
+			return value;
+		}
+	}
+	return '';
+}
+
+function readJsonFile(filePath, fallback) {
+	try {
+		if (!fs.existsSync(filePath)) {
+			return fallback;
+		}
+		return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+	} catch (error) {
+		return fallback;
+	}
+}
+
+async function scanCertificateFiles(projectPath) {
+	if (!projectPath || !fs.existsSync(projectPath)) {
+		return [];
+	}
+
+	const entries = await fs.promises.readdir(projectPath, { withFileTypes: true });
+	return entries
+		.filter(entry => entry.isFile() && CERTIFICATE_EXTENSIONS.has(path.extname(entry.name).toLowerCase()))
+		.map(entry => {
+			const filePath = path.join(projectPath, entry.name);
+			return {
+				label: entry.name,
+				value: filePath
+			};
+		});
+}
+
+function getCachedConfig(configuration, fsPath) {
+	const globalConfig = readJsonFile(configCachePath, {});
+	if (!configuration.get('easypackx.projectCacheConfig')) {
+		return globalConfig;
+	}
+
+	const projectConfigs = readJsonFile(moduleConfigCachePath, []);
+	const projectConfig = projectConfigs.find(item => item.fsPath === fsPath)?.data;
+	// 项目级缓存不存在时回退到全局缓存，避免 SDK 地址输入框变成空值。
+	return projectConfig ?? globalConfig;
+}
+
+function getSdkDownloadUrl(configuration, cachedConfig = {}) {
+	return localCache.get('sdkDownloadUrl')
+		|| cachedConfig.sdkDownloadUrl
+		|| getFirstConfiguration(configuration, SDK_DOWNLOAD_URL_CONFIG_KEYS)
+		|| DEFAULT_ANDROID_SDK_URL;
+}
+
+function closeActiveWebSocketServer() {
+	if (!activeWebSocketServer) {
+		return;
+	}
+
+	// 主动关闭上一次遗留的本地通信服务，避免重复打开窗口时端口冲突。
+	activeWebSocketServer.close(() => {
+		console.log('WebSocket 服务已停止');
+	});
+	activeWebSocketServer = null;
+}
+
+function notifyError(message) {
+	output.error(message);
+	if (typeof hx.window.showErrorMessage === 'function') {
+		hx.window.showErrorMessage(message);
+		return;
+	}
+	hx.window.showInformationMessage(message);
+}
+
+async function normalizePackData(data) {
+	// 表单里可能残留旧版 JDK 11 路径，提交前统一切换到满足 Gradle 要求的 JDK。
+	return {
+		...data,
+		javaHome: await resolveJavaHome(data.javaHome, 17)
+	};
+}
 
 async function checkPackenv(androidHome, javaHome) {
 	try {
@@ -23,7 +121,7 @@ async function checkPackenv(androidHome, javaHome) {
 		if (checkAndroidHomeRes != 'success') {
 			return checkAndroidHomeRes
 		}
-		const checkGradleJavaVersionRes = await checkGradleJavaVersion(javaHome, 11)
+		const checkGradleJavaVersionRes = await checkGradleJavaVersion(javaHome, 17)
 		if (checkGradleJavaVersionRes != 'success') {
 			return checkGradleJavaVersionRes
 		}
@@ -37,56 +135,87 @@ async function checkPackenv(androidHome, javaHome) {
 const moduleConfigCachePath = path.join(__dirname, '../cache/', 'module.config.json');
 const configCachePath = path.join(__dirname, '../cache/', 'config.json');
 
-async function saveCache(data, options, configuration) {
-	if (data.saveLocalConfig) {
-		const moduleConfig = {}
-		Object.keys(data).map(item => {
-			if (item.startsWith('uni-')) {
-				moduleConfig[item] = data[item]
+function writeJsonFile(filePath, data) {
+	fs.mkdirSync(path.dirname(filePath), { recursive: true });
+	fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+}
+
+function buildModuleConfig(data) {
+	const moduleConfig = {};
+	Object.keys(data).map(item => {
+		if (item.startsWith('uni-')) {
+			moduleConfig[item] = data[item];
+		}
+	});
+	return moduleConfig;
+}
+
+function getCacheFsPath(data, options) {
+	return data.uniName || localCache.get('fsPath') || options.uniName;
+}
+
+function writeProjectCache(fsPath, cachePatch) {
+	if (!fsPath) {
+		const globalConfig = readJsonFile(configCachePath, {});
+		writeJsonFile(configCachePath, {
+			...globalConfig,
+			...cachePatch
+		});
+		return;
+	}
+
+	const projectConfigs = readJsonFile(moduleConfigCachePath, []);
+	const existingIndex = projectConfigs.findIndex(item => item.fsPath === fsPath);
+	if (existingIndex >= 0) {
+		projectConfigs[existingIndex] = {
+			fsPath,
+			data: {
+				...projectConfigs[existingIndex].data,
+				...cachePatch
 			}
-		})
+		};
+	} else {
+		projectConfigs.push({
+			fsPath,
+			data: cachePatch
+		});
+	}
+	writeJsonFile(moduleConfigCachePath, projectConfigs);
+}
+
+function saveSdkDownloadUrlCache(data, options, configuration) {
+	const sdkDownloadUrl = data.sdkDownloadUrl || options.sdkDownloadUrl || getSdkDownloadUrl(configuration);
+	localCache.set('sdkDownloadUrl', sdkDownloadUrl);
+
+	if (configuration.get('easypackx.projectCacheConfig')) {
+		writeProjectCache(getCacheFsPath(data, options), { sdkDownloadUrl });
+		return sdkDownloadUrl;
+	}
+
+	const globalConfig = readJsonFile(configCachePath, {});
+	writeJsonFile(configCachePath, {
+		...globalConfig,
+		sdkDownloadUrl
+	});
+	return sdkDownloadUrl;
+}
+
+async function saveCache(data, options, configuration) {
+	const sdkDownloadUrl = saveSdkDownloadUrlCache(data, options, configuration);
+	if (data.saveLocalConfig) {
+		const moduleConfig = buildModuleConfig(data);
 		localCache.set('moduleConfig', moduleConfig)
 		let cacheData = Object.assign({
-			moduleConfig: moduleConfig
+			moduleConfig: moduleConfig,
+			sdkDownloadUrl: sdkDownloadUrl
 		}, {
 			saveLocalConfig: data.saveLocalConfig
 		})
 		// 判断是否按照项目独立缓存
-		if (configuration.get('kux-easy-pack-hxp.projectCacheConfig')) {
-			if (!fs.existsSync(moduleConfigCachePath)) {
-				await fs.writeFileSync(moduleConfigCachePath, JSON.stringify([], null, 2), 'utf-8')
-			}
-			let cacheDataReaded = JSON.parse(await fs.readFileSync(moduleConfigCachePath, 'utf-8'))
-			if (!cacheDataReaded) {
-				cacheDataReaded = []
-			}
-			let fsPath = localCache.get('fsPath') ?? options.uniName
-			if (cacheDataReaded.length == 0) {
-				cacheDataReaded.push({
-					fsPath: fsPath,
-					data: cacheData
-				})
-			} else {
-				if (cacheDataReaded.find(item => item.fsPath == fsPath)) {
-					cacheDataReaded.map((item, index) => {
-						if (item.fsPath === fsPath) {
-							cacheDataReaded[index] = {
-								fsPath: fsPath,
-								data: cacheData,
-							}
-						}
-					})
-				} else {
-					cacheDataReaded.push({
-						fsPath: fsPath,
-						data: cacheData
-					})
-				}
-			}
-
-			await fs.writeFileSync(moduleConfigCachePath, JSON.stringify(cacheDataReaded, null, 2), 'utf-8')
+		if (configuration.get('easypackx.projectCacheConfig')) {
+			writeProjectCache(getCacheFsPath(data, options), cacheData);
 		} else {
-			await fs.writeFileSync(configCachePath, JSON.stringify(cacheData, null, 2), 'utf-8')
+			writeJsonFile(configCachePath, cacheData);
 		}
 	}
 }
@@ -94,10 +223,10 @@ async function saveCache(data, options, configuration) {
 async function showFormDialog(context) {
 
 	let webviewDialog = hx.window.createWebViewDialog({
-		title: 'kux自定义打包',
-		description: '请填写打包前的必要配置内容',
+		title: 'EasyPackX',
+		description: '请填写构建前的必要配置内容',
 		dialogButtons: [
-			"取消", "提交"
+			"取消", "开始构建"
 		],
 		size: {
 			width: 650,
@@ -123,6 +252,9 @@ async function showFormDialog(context) {
 	webview.html = fs.readFileSync(`${__dirname}/form.html`, 'utf-8');
 
 	let promi = webviewDialog.show();
+	if (typeof webviewDialog.onDialogClosed === 'function') {
+		webviewDialog.onDialogClosed(closeActiveWebSocketServer);
+	}
 
 	const workspaceFolders = await hx.workspace.getWorkspaceFolders();
 	const configuration = hx.workspace.getConfiguration();
@@ -130,8 +262,8 @@ async function showFormDialog(context) {
 	const workspaceFolder = await hx.workspace.getWorkspaceFolder(activeEditor?.document?.workspaceFolder);
 	let options = {
 		uniName: '',
-		repositoryUrl: localCache.get('repositoryUrl') ?? configuration.get('kux-easy-pack-hxp.repositoryUrl'),
-		javaHome: localCache.get('javaHome') ?? configuration.get('kux-easy-pack-hxp.javaHome')
+		javaHome: await resolveJavaHome(localCache.get('javaHome') ?? getFirstConfiguration(configuration, JAVA_HOME_CONFIG_KEYS), 17),
+		sdkDownloadUrl: getSdkDownloadUrl(configuration)
 	}
 	if (workspaceFolder?.uri?.uri?.fsPath) {
 		options.uniName = workspaceFolder.uri.uri.fsPath ?? '';
@@ -142,31 +274,46 @@ async function showFormDialog(context) {
 		}
 	}
 
-	// 创建一个WebSocket服务器实例，监听在9991端口
-	const wss = new WebSocket.Server({
-		port: 9992
+	closeActiveWebSocketServer();
+	let wss = null;
+	try {
+		// 表单页通过本地 WebSocket 与插件进程通信，重复打开前要先释放旧端口。
+		wss = new WebSocket.Server({
+			port: 9992
+		});
+		activeWebSocketServer = wss;
+	} catch (error) {
+		notifyError(`启动本地配置通信服务失败：${error.message}`);
+		webviewDialog.close();
+		return;
+	}
+
+	wss.on('error', (error) => {
+		notifyError(`本地配置通信服务异常：${error.message}`);
 	});
 
-	const outputChannel = hx.window.createOutputChannel('kux自定义打包');
-	const customConsoleLog = outputChannel.appendLine;
+	const outputChannel = hx.window.createOutputChannel('EasyPackX');
+	const customConsoleLog = outputChannel.appendLine.bind(outputChannel);
 	
 	async function executeCliPack (projectPath, callback) {
 		try {
-			if (configuration.get('kux-easy-pack-hxp.autoPublishAppResource') == true) {
-				// const projectName = await (await getActiveProject()).uri.name;
-				executeCliCommand(getCliDir(), ['publish', '--platform', 'APP', '--type', 'appResource',
-					'--project', projectPath
-				], (error, code) => {
+			if (configuration.get('easypackx.autoPublishAppResource') == true) {
+				let exportFinished = false;
+				const args = ['publish', 'app-android', '--type', 'appResource', '--project', projectPath];
+				executeCliCommand(getCliDir(), args, (error, code) => {
 					if (error) {
 						output.error(`自动生成本地资源失败：${error}`);
 						return;
 					}
-					
+					if (code !== 0 && !exportFinished) {
+						output.error(`自动生成本地资源失败，CLI 退出码：${code}`);
+						return;
+					}
 					callback();
 				}, (outputStr) => {
-					// console.log(outputStr);
 					output.info(outputStr);
 					if (outputStr.indexOf('导出 android 成功') > -1) {
+						exportFinished = true;
 						return true;
 					}
 					return false;
@@ -194,8 +341,8 @@ async function showFormDialog(context) {
 				// ws.send('收到消息：' + message);
 				const msg = JSON.parse(message)
 				if (msg.type === 'confirm') {
+					msg.data = await normalizePackData(msg.data);
 					outputChannel.show();
-					localCache.set('repositoryUrl', msg.data.repositoryUrl);
 					localCache.set('uniName', msg.data.uniName);
 					localCache.set('javaHome', msg.data.javaHome)
 					localCache.set('saveLocalConfig', msg.data.saveLocalConfig)
@@ -206,13 +353,21 @@ async function showFormDialog(context) {
 					localCache.set('keyPassword', msg.data.storeForm.keyPassword)
 					localCache.set('sdkDownloadUrl', msg.data.sdkDownloadUrl)
 					await saveCache(msg.data, options, configuration)
+					closeActiveWebSocketServer()
 					localCache.get('webviewDialog')?.close()
 					await executeCliPack(msg.data.uniName, () => {
+						let start = null;
+						try {
+							start = getPackStart(context.extensionPath);
+						} catch (error) {
+							notifyError(error.message);
+							return;
+						}
 						start({
 							hx: hx,
 							uniappProjectPath: msg.data.uniName,
 							allowClone: true,
-							root: `${context.extensionPath}/src/kux-easy-pack`,
+							root: `${context.extensionPath}/src/easypackx`,
 							customConsoleLog: customConsoleLog,
 							customSetStatusMessage: hx.window.setStatusBarMessage,
 							...msg.data,
@@ -220,8 +375,8 @@ async function showFormDialog(context) {
 							storePassword: msg.data.storeForm.storePassword,
 							keyAlias: msg.data.storeForm.keyAlias,
 							keyPassword: msg.data.storeForm.keyPassword,
-							uniappxNativeAndroid: configuration.get("kux-easy-pack-hxp.uniappxNativeAndroid"),
-							customSDKPath: configuration.get("kux-easy-pack-hxp.customSDKPath")
+							uniappxNativeAndroid: configuration.get("easypackx.uniappxNativeAndroid"),
+							customSDKPath: configuration.get("easypackx.customSDKPath")
 						})
 					})
 				}
@@ -232,6 +387,12 @@ async function showFormDialog(context) {
 						type: 'autoCheckPackenvRes',
 						data: checkPackenvRes
 					}))
+				}
+				if (msg.type === 'scanCertificateFiles') {
+					ws.send(JSON.stringify({
+						type: 'certificateFiles',
+						data: await scanCertificateFiles(msg.data?.uniName)
+					}));
 				}
 			});
 
@@ -247,9 +408,7 @@ async function showFormDialog(context) {
 			}))
 			ws.send(JSON.stringify({
 				type: 'androidLocalSdk',
-				data: configuration.get('kux-easy-pack-hxp.androidLocalSdk') ??
-					configuration
-					.get('uts-development-android.sdkDir')
+				data: getFirstConfiguration(configuration, SDK_DIR_CONFIG_KEYS)
 			}))
 			const fsPath = localCache.get('fsPath') ?? options.uniName
 			ws.send(JSON.stringify({
@@ -257,8 +416,8 @@ async function showFormDialog(context) {
 				data: fsPath
 			}))
 			ws.send(JSON.stringify({
-				type: 'repositoryUrl',
-				data: options.repositoryUrl
+				type: 'certificateFiles',
+				data: await scanCertificateFiles(fsPath)
 			}))
 			ws.send(JSON.stringify({
 				type: 'javaHome',
@@ -270,12 +429,8 @@ async function showFormDialog(context) {
 				type: 'checkAgconnectServicesRes',
 				data: checkAgconnectServicesRes
 			}))
-			if (fs.existsSync(configCachePath) || fs.existsSync(moduleConfigCachePath)) {
-				let configData = JSON.parse(await fs.readFileSync(configCachePath, 'utf-8'))
-				if (configuration.get('kux-easy-pack-hxp.projectCacheConfig')) {
-					configData = JSON.parse(await fs.readFileSync(moduleConfigCachePath, 'utf-8')).find(
-						item => item.fsPath = fsPath).data
-				}
+			const configData = getCachedConfig(configuration, fsPath);
+			if (Object.keys(configData).length > 0 || localCache.get('moduleConfig')) {
 				const saveLocalConfig = configData?.saveLocalConfig ?? localCache.get('saveLocalConfig')
 				ws.send(JSON.stringify({
 					type: 'saveLocalConfig',
@@ -290,33 +445,31 @@ async function showFormDialog(context) {
 			ws.send(JSON.stringify({
 				type: 'androidPackageName',
 				data: localCache.get('androidPackageName') ?? configuration.get(
-					'kux-easy-pack-hxp.androidPackageName')
+					'easypackx.androidPackageName')
 			}))
 			ws.send(JSON.stringify({
 				type: 'storePath',
 				data: localCache.get('storePath') ?? configuration.get(
-					'kux-easy-pack-hxp.storePath')
+					'easypackx.storePath')
 			}))
 			ws.send(JSON.stringify({
 				type: 'storePassword',
 				data: localCache.get('storePassword') ?? configuration.get(
-					'kux-easy-pack-hxp.storePassword')
+					'easypackx.storePassword')
 			}))
 			ws.send(JSON.stringify({
 				type: 'keyAlias',
 				data: localCache.get('keyAlias') ?? configuration.get(
-					'kux-easy-pack-hxp.keyAlias')
+					'easypackx.keyAlias')
 			}))
 			ws.send(JSON.stringify({
 				type: 'keyPassword',
 				data: localCache.get('keyPassword') ?? configuration.get(
-					'kux-easy-pack-hxp.keyPassword')
+					'easypackx.keyPassword')
 			}))
 			ws.send(JSON.stringify({
 				type: 'sdkDownloadUrl',
-				data: localCache.get('sdkDownloadUrl') ?? configuration.get('kux-easy-pack-hxp.customSDKPath') ?? configuration.get(
-					'kux-easy-pack-hxp.sdkDownloadUrl'
-				)
+				data: getSdkDownloadUrl(configuration, configData)
 			}))
 		} else {
 			console.log('认证失败');
@@ -326,19 +479,21 @@ async function showFormDialog(context) {
 
 	webview.onDidReceiveMessage(async (msg) => {
 		if (msg.command == 'cancel') {
+			closeActiveWebSocketServer()
 			webviewDialog.close();
 		}
 		if (msg.command == 'openWeb') {
 			hx.env.openExternal(msg.href);
 		}
 		if (msg.command == 'confirm') {
+			msg.data = await normalizePackData(msg.data);
 			outputChannel.show();
 			// webviewDialog.close()
-			localCache.set('repositoryUrl', msg.data.repositoryUrl);
 			localCache.set('uniName', msg.data.uniName);
 			localCache.set('javaHome', msg.data.javaHome)
 			localCache.set('androidPackageName', msg.data.androidPackageName)
 			localCache.set('storePath', msg.data.storeForm.storePath)
+			localCache.set('storePassword', msg.data.storeForm.storePassword)
 			localCache.set('keyAlias', msg.data.storeForm.keyAlias)
 			localCache.set('keyPassword', msg.data.storeForm.keyPassword)
 			localCache.set('sdkDownloadUrl', msg.data.sdkDownloadUrl)
@@ -352,25 +507,30 @@ async function showFormDialog(context) {
 			// 	})
 			// 	localCache.set('moduleConfig', moduleConfig)
 			// }
-			wss.close(() => {
-				console.log('WebSocket 服务已停止');
-			})
+			closeActiveWebSocketServer()
 			webviewDialog.close()
 			await executeCliPack(msg.data.uniName, () => {
+				let start = null;
+				try {
+					start = getPackStart(context.extensionPath);
+				} catch (error) {
+					notifyError(error.message);
+					return;
+				}
 				start({
 					hx: hx,
 					uniappProjectPath: msg.data.uniName,
 					allowClone: true,
-					root: `${context.extensionPath}/src/kux-easy-pack`,
-					customConsoleLog: outputChannel.appendLine,
+					root: `${context.extensionPath}/src/easypackx`,
+					customConsoleLog: outputChannel.appendLine.bind(outputChannel),
 					customSetStatusMessage: hx.window.setStatusBarMessage,
 					...msg.data,
 					storePath: msg.data.storeForm.storePath,
 					storePassword: msg.data.storeForm.storePassword,
 					keyAlias: msg.data.storeForm.keyAlias,
 					keyPassword: msg.data.storeForm.keyPassword,
-					uniappxNativeAndroid: configuration.get("kux-easy-pack-hxp.uniappxNativeAndroid"),
-					customSDKPath: configuration.get("kux-easy-pack-hxp.customSDKPath")
+					uniappxNativeAndroid: configuration.get("easypackx.uniappxNativeAndroid"),
+					customSDKPath: configuration.get("easypackx.customSDKPath")
 				})
 			})
 		}

@@ -1,5 +1,5 @@
 const hx = require('hbuilderx');
-const outputChannel = hx.window.createOutputChannel('kux自定义打包');
+const outputChannel = hx.window.createOutputChannel('uni-app x 离线打包');
 const customConsoleLog = outputChannel.appendLine;
 
 const colors = {
