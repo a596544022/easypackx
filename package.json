@@ -14,6 +14,7 @@
 	"main": "./extension",
 	"activationEvents": [
 		"onCommand:extension.easypackx.packUnixAndroid",
+		"onCommand:extension.easypackx.packUniAppXIos",
 		"onCommand:extension.easypackx.packUniAndroid",
 		"onCommand:extension.easypackx.openCombinedLog",
 		"onCommand:extension.easypackx.openErrorLog",
@@ -33,6 +34,21 @@
 					"type": "string",
 					"description": "用来存放插件打包后的原生工程位置，方便开发者后面自行本地调试，请填写绝对路径。",
 					"default": ""
+				},
+				"easypackx.iosSdkDownloadUrl": {
+					"type": "string",
+					"description": "iOS离线打包SDK下载地址，<a href=\"https://doc.dcloud.net.cn/uni-app-x/native/download/ios.html\">详情</a>",
+					"default": "https://web-ext-storage.dcloud.net.cn/uni-app-x/sdk/iOS/UniAppX-iOS%405.07.zip"
+				},
+				"easypackx.uniappxNativeIos": {
+					"type": "string",
+					"description": "用来存放插件生成后的 iOS 原生工程位置，方便开发者后面使用 Xcode 调试或打包，请填写绝对路径。",
+					"default": ""
+				},
+				"easypackx.iosBundleId": {
+					"type": "string",
+					"description": "iOS Bundle Identifier，自选证书或 Xcode 签名时使用。",
+					"default": "cn.testapp.app"
 				},
 				"easypackx.sdkDir": {
 					"type": "string",
@@ -91,6 +107,10 @@
 				"title": "打包uniapp x项目"
 			},
 			{
+				"command": "extension.easypackx.packUniAppXIos",
+				"title": "生成uniapp x iOS工程"
+			},
+			{
 				"command": "extension.easypackx.packUniAndroid",
 				"title": "打包uniapp 项目"
 			},
@@ -135,24 +155,30 @@
 					"title": "打包uniapp x"
 				},
 				{
-					"command": "extension.easypackx.packUniAndroid",
+					"command": "extension.easypackx.packUniAppXIos",
 					"group": "easypackx@2",
+					"when": "editorTextFocus",
+					"title": "生成uniapp x iOS工程"
+				},
+				{
+					"command": "extension.easypackx.packUniAndroid",
+					"group": "easypackx@3",
 					"when": "editorTextFocus",
 					"title": "打包uniapp"
 				},
 				{
 					"command": "extension.easypackx.openCombinedLog",
-					"group": "easypackx@3",
+					"group": "easypackx@4",
 					"title": "查看运行日志"
 				},
 				{
 					"command": "extension.easypackx.openErrorLog",
-					"group": "easypackx@4",
+					"group": "easypackx@5",
 					"title": "查看错误日志"
 				},
 				{
 					"command": "extension.easypackx.openReadme",
-					"group": "easypackx@5",
+					"group": "easypackx@6",
 					"title": "查看文档"
 				}
 			],
@@ -168,8 +194,13 @@
 					"title": "打包uniapp x"
 				},
 				{
-					"command": "extension.easypackx.packUniAndroid",
+					"command": "extension.easypackx.packUniAppXIos",
 					"group": "easypackx@2",
+					"title": "生成uniapp x iOS工程"
+				},
+				{
+					"command": "extension.easypackx.packUniAndroid",
+					"group": "easypackx@3",
 					"title": "打包uniapp"
 				}
 			],

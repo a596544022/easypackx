@@ -3,7 +3,46 @@ const fsExtra = require('fs-extra');
 const path = require('path');
 const glob = require('glob');
 const { logger } = require('../../log/logger')
-const { rimrafSync } = require('rimraf')
+const rimraf = require('rimraf')
+
+const RETRYABLE_DELETE_ERRORS = new Set(['ENOTEMPTY', 'EBUSY', 'EPERM', 'EMFILE']);
+
+function sleepSync(ms) {
+	const end = Date.now() + ms;
+	while (Date.now() < end) {
+		// Xcode 构建缓存目录可能还在释放文件句柄，短暂等待后再重试删除。
+	}
+}
+
+function removeSyncWithRetry(targetPath, maxRetries = 8, retryDelay = 150) {
+	if (!targetPath || !fs.existsSync(targetPath)) {
+		return;
+	}
+
+	for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+		try {
+			if (fs.rmSync) {
+				fs.rmSync(targetPath, {
+					recursive: true,
+					force: true,
+					maxRetries,
+					retryDelay
+				});
+			} else {
+				rimraf.sync(targetPath, {
+					disableGlob: true,
+					maxBusyTries: maxRetries
+				});
+			}
+			return;
+		} catch (error) {
+			if (attempt >= maxRetries || !RETRYABLE_DELETE_ERRORS.has(error.code)) {
+				throw error;
+			}
+			sleepSync(retryDelay * (attempt + 1));
+		}
+	}
+}
 
 /**
  * 复制文件
@@ -35,8 +74,12 @@ async function copyFilesWithGlob(sourceDir, targetDir, pattern) {
 
 async function deleteFile (path) {
 	return new Promise((resolve, reject) => {
-		rimrafSync(path)
-		resolve()
+		try {
+			removeSyncWithRetry(path)
+			resolve()
+		} catch (error) {
+			reject(error)
+		}
 	})
 }
 

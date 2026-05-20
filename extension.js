@@ -2,6 +2,7 @@ var fs = require('fs');
 const {
 	showFormDialog
 } = require('./src/components/showFormDialog');
+const { showIosFormDialog } = require('./src/components/showIosFormDialog');
 
 const showReadme = require("./src/showReadme");
 const {
@@ -24,13 +25,16 @@ async function activate(context) {
 		// showFormDialog(context);
 		showFormDialog(context);
 	});
-	let disposable3 = hx.commands.registerCommand('extension.easypackx.packUniAndroid', () => {
+	let disposable3 = hx.commands.registerCommand('extension.easypackx.packUniAppXIos', async () => {
+		showIosFormDialog(context);
+	});
+	let disposable4 = hx.commands.registerCommand('extension.easypackx.packUniAndroid', () => {
 		hx.window.showInformationMessage('暂不支持该打包方式。');
 	});
-	let disposable4 = hx.commands.registerCommand('extension.easypackx.openCombinedLog', () => {
+	let disposable5 = hx.commands.registerCommand('extension.easypackx.openCombinedLog', () => {
 		openLogDocument(context, 'src/easypackx/log/combined.log', '运行日志');
 	});
-	let disposable5 = hx.commands.registerCommand('extension.easypackx.openErrorLog', () => {
+	let disposable6 = hx.commands.registerCommand('extension.easypackx.openErrorLog', () => {
 		openLogDocument(context, 'src/easypackx/log/error.log', '错误日志');
 	});
 	let webviewPanel = hx.window.createWebView("extension.easypackx.view.readme", {
@@ -39,7 +43,7 @@ async function activate(context) {
 
 	showReadme(webviewPanel, context);
 
-	let disposable6 = hx.commands.registerCommand('extension.easypackx.openReadme', () => {
+	let disposable7 = hx.commands.registerCommand('extension.easypackx.openReadme', () => {
 		hx.window.showView({
 			viewId: 'extension.easypackx.view.readme',
 			containerId: 'easypackxReadme'
@@ -55,6 +59,7 @@ async function activate(context) {
 		disposable4,
 		disposable5,
 		disposable6,
+		disposable7,
 		// onDidOpenTextDocumentEventDispose
 	]);
 }

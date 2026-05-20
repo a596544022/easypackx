@@ -455,6 +455,75 @@ function buildModuleConfig(manifest, options = {}) {
 	};
 }
 
+const ANDROID_SDK_REQUIRED_FILES = [
+	'SDK/libs',
+	'plugins/uts-kotlin-compiler-plugin-0.0.1.jar',
+	'plugins/uts-kotlin-gradle-plugin-0.0.1.jar'
+];
+
+function getAndroidSdkCandidateNames(sdkName) {
+	const names = [sdkName];
+	try {
+		names.push(decodeURIComponent(sdkName));
+	} catch (error) {
+		logger.warn(`Android SDK目录名解码失败：${sdkName}`);
+	}
+	return _.uniq(names.filter(Boolean));
+}
+
+function isAndroidSdkExtractedValid(sdkRoot) {
+	return ANDROID_SDK_REQUIRED_FILES.every(item => fsExtra.existsSync(path.join(sdkRoot, item)));
+}
+
+function getMissingAndroidSdkFiles(sdkRoot) {
+	return ANDROID_SDK_REQUIRED_FILES.filter(item => !fsExtra.existsSync(path.join(sdkRoot, item)));
+}
+
+function findValidAndroidSdkRoot(sdkLibsPath, sdkName) {
+	for (const candidateName of getAndroidSdkCandidateNames(sdkName)) {
+		const candidateRoot = path.join(sdkLibsPath, candidateName);
+		if (isAndroidSdkExtractedValid(candidateRoot)) {
+			return {
+				name: candidateName,
+				root: candidateRoot
+			};
+		}
+	}
+
+	if (!fsExtra.existsSync(sdkLibsPath)) {
+		return null;
+	}
+
+	const entries = fsExtra.readdirSync(sdkLibsPath, { withFileTypes: true });
+	for (const entry of entries) {
+		if (!entry.isDirectory()) {
+			continue;
+		}
+		const candidateRoot = path.join(sdkLibsPath, entry.name);
+		if (isAndroidSdkExtractedValid(candidateRoot)) {
+			return {
+				name: entry.name,
+				root: candidateRoot
+			};
+		}
+	}
+
+	return null;
+}
+
+function assertAndroidSdkExtracted(sdkLibsPath) {
+	const validSdk = findValidAndroidSdkRoot(sdkLibsPath, SDK_UNZIP_NAME);
+	if (validSdk) {
+		SDK_UNZIP_NAME = validSdk.name;
+		checkPass = true;
+		return;
+	}
+
+	const sdkRoot = path.join(sdkLibsPath, SDK_UNZIP_NAME);
+	const missingFiles = getMissingAndroidSdkFiles(sdkRoot).join('、');
+	throw new Error(`Android离线打包SDK解压不完整，缺少：${missingFiles || '关键文件'}，请重新执行打包以自动修复SDK缓存。`);
+}
+
 function hasSdkLib(fileName) {
 	if (!SDK_UNZIP_NAME) {
 		return true;
@@ -1424,7 +1493,7 @@ async function updateBuildInModules() {
 		if (distribute?.android?.targetSdkVersion) {
 			appBuildGradleConfig.targetSdkVersion = distribute.android.targetSdkVersion
 		}
-		
+
 		// 更新CPU列表
 		// if (manifest?.app?.distribute?.android?.abiFilters) {
 		// 	appBuildGradleConfig.abis = buildAbis(manifest.app.distribute.android.abiFilters)
@@ -1985,7 +2054,7 @@ async function updateBuildInModules() {
 				]);
 			}
 			// uni-fileSystemManager模块，uni-previewImage模块，uni-openDocument依赖于该模块
-			if (modules['uni-fileSystemManager'] 
+			if (modules['uni-fileSystemManager']
 			|| modules['uni-previewImage']
 			|| modules['uni-openDocument']
 			|| modules['uni-live-pusher']
@@ -2060,9 +2129,9 @@ async function updateBuildInModules() {
 			}
 			// uni-network模块，uni-cloudClient模块、uni-createInnerAudioContext模块、uni-getBackgroundAudioManager模块、uni-previewImage模块依赖于该模块
 			if (
-				modules['uni-network'] || 
-				modules['uni-cloudClient'] || 
-				modules['uni-createInnerAudioContext'] || 
+				modules['uni-network'] ||
+				modules['uni-cloudClient'] ||
+				modules['uni-createInnerAudioContext'] ||
 				modules['uni-getBackgroundAudioManager'] ||
 				modules['uni-previewImage'] ||
 				modules['uni-live-pusher']
@@ -2089,8 +2158,8 @@ async function updateBuildInModules() {
 			}
 			// uni-media模块，uni-camera模块、uni-cloudClient模块、uni-previewImage模块、uni-scanCode模块依赖于该模块
 			if (
-				modules['uni-media'] || 
-				modules['uni-camera'] || 
+				modules['uni-media'] ||
+				modules['uni-camera'] ||
 				modules['uni-cloudClient'] ||
 				modules['uni-previewImage'] ||
 				modules['uni-scanCode'] ||
@@ -2308,8 +2377,8 @@ async function updateBuildInModules() {
 					)
 			}
 			// uni-camera模块，uni-barcode-scanning模块，uni-scanCode模块依赖该模块
-			if (modules['uni-camera'] || 
-				modules['uni-barcode-scanning'] || 
+			if (modules['uni-camera'] ||
+				modules['uni-barcode-scanning'] ||
 				modules['uni-scanCode']
 			) {
 				// 同步本地依赖
@@ -2931,26 +3000,40 @@ async function handleSDKUpdate() {
 		  : unZipService.getArchiveName(SDK_DOWNLOAD_URL);
 		
 		libsZIPPath = path.join(SDK_BASE_PATH, `${SDK_UNZIP_NAME}.zip`);
-		
+
 		// 检查现有SDK包是否存在
 		if (fsExtra.existsSync(libsZIPPath)) {
-			const tips = 'uni-app x Android离线打包SDK已是最新版本，跳过更新';
-			output.warn(tips, customConsoleLog);
-			checkSDKMessage?.dispose();
-			checkSDKSpinner?.succeed(tips);
-			logger.info(tips);
+			const validSdk = findValidAndroidSdkRoot(SDK_LIBS_UNZIP_PATH, SDK_UNZIP_NAME);
+			if (validSdk) {
+				SDK_UNZIP_NAME = validSdk.name;
+				const tips = 'uni-app x Android离线打包SDK已是最新版本，跳过更新';
+				output.warn(tips, customConsoleLog);
+				checkSDKMessage?.dispose();
+				checkSDKSpinner?.succeed(tips);
+				logger.info(tips);
+				checkPass = true;
+			} else {
+				const sdkRoot = path.join(SDK_LIBS_UNZIP_PATH, SDK_UNZIP_NAME);
+				const missingFiles = getMissingAndroidSdkFiles(sdkRoot).join('、');
+				const tips = `检测到Android离线打包SDK缓存未解压或不完整，准备重新解压${missingFiles ? `，缺少：${missingFiles}` : ''}`;
+				output.warn(tips, customConsoleLog);
+				checkSDKMessage?.dispose();
+				checkSDKSpinner?.warn(tips);
+				logger.warn(tips);
+				needUnzip = true;
+			}
 		} else {
 			// 处理不同的SDK来源
 			if (isRemoteSDK) {
 				const downloadSDKSpinner = ora('开始下载uni-app x Android离线打包SDK...').start();
 				logger.info('开始下载uni-app x Android离线打包SDK...');
-				
+
 				const downloadSuccess = await downloadZip(SDK_DOWNLOAD_URL, libsZIPPath);
 				if (!downloadSuccess) {
 				  fsExtra.rmSync(libsZIPPath, { force: true });
 				  return;
 				}
-				
+
 				downloadSDKSpinner.succeed();
 				output.success('uni-app x Android离线打包SDK下载完成', customConsoleLog);
 				logger.info('uni-app x Android离线打包SDK下载完成');
@@ -2970,20 +3053,22 @@ async function handleSDKUpdate() {
 				}
 			}
 		}
-		
+
 		// 统一解压处理
 		if (needUnzip) {
 			await unzipSDK(libsZIPPath, SDK_LIBS_UNZIP_PATH);
 		}
+
+		assertAndroidSdkExtracted(SDK_LIBS_UNZIP_PATH);
 	} catch (error) {
 		console.log(error);
 		// 异常处理统一管理
 		const errorMessage = `处理SDK时发生错误: ${error.message}`;
 		output.error(errorMessage, customConsoleLog);
 		logger.error(errorMessage, error);
-		
+
 		// 清理可能不完整的文件
-		if (libsZIPPath && fsExtra.existsSync(libsZIPPath)) {
+		if (libsZIPPath && fsExtra.existsSync(libsZIPPath) && !fsExtra.existsSync(path.join(SDK_LIBS_UNZIP_PATH, SDK_UNZIP_NAME))) {
 		  fsExtra.rmSync(libsZIPPath, { force: true });
 		}
 		throw error;

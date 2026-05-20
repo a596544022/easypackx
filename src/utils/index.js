@@ -3,7 +3,7 @@ const path = require("path");
 const { executeCliCommand } = require('./execute');
 const { getActiveProject, hx } = require('./hx');
 const { output, colors } = require('./output');
-const { DEFAULT_ANDROID_SDK_URL } = require('./constants');
+const { DEFAULT_ANDROID_SDK_URL, DEFAULT_IOS_SDK_URL, DEFAULT_IOS_BUNDLE_ID } = require('./constants');
 
 function arrayRemove(arr, elementOrIndex) {
 	// 检查是否是数字（索引）
@@ -66,5 +66,7 @@ module.exports = {
 	getActiveProject,
 	output,
 	colors,
-	DEFAULT_ANDROID_SDK_URL
+	DEFAULT_ANDROID_SDK_URL,
+	DEFAULT_IOS_SDK_URL,
+	DEFAULT_IOS_BUNDLE_ID
 }

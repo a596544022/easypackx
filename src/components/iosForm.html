@@ -1,0 +1,635 @@
+<script src="https://registry.npmmirror.com/vue/3.5.13/files/dist/vue.global.js"></script>
+<script src="https://registry.npmmirror.com/element-plus/2.7.6/files/dist/index.full.js"></script>
+<link rel="stylesheet" href="https://registry.npmmirror.com/element-plus/2.7.6/files/dist/index.css" />
+
+<div id="app" class="app-shell">
+	<div class="topbar">
+		<div class="brand">
+			<div class="brand-mark">EX</div>
+			<div>
+				<div class="eyebrow">iOS native packaging</div>
+				<h1>EasyPackX</h1>
+				<p>选择 HBuilderX 已打开的项目，生成可用 Xcode 打开的 uni-app x iOS 原生工程。</p>
+			</div>
+		</div>
+		<div class="meta">
+			<span class="chip">iOS</span>
+			<span class="chip muted">Xcode 工程</span>
+		</div>
+	</div>
+
+	<div class="panel">
+		<div class="panel-title">
+			<span class="section-index">1</span>
+			<div>
+				<h2>项目</h2>
+				<p>优先读取 HBuilderX 当前打开的项目，也可以手动输入绝对路径。</p>
+			</div>
+		</div>
+		<label class="field-label" for="uni-name">项目位置</label>
+		<el-autocomplete
+			id="uni-name"
+			v-model="data.uniName"
+			:fetch-suggestions="querySearchUniName"
+			clearable
+			value-key="name"
+			placeholder="请选择 HBuilderX 已打开的项目，或输入项目绝对路径"
+			@select="onSelectUniName"
+		>
+			<template #default="{ item }">
+				<div class="project-option">
+					<strong>{{ item.name }}</strong>
+					<span>{{ item.fsPath }}</span>
+				</div>
+			</template>
+		</el-autocomplete>
+		<div class="hint-row">
+			<span>{{ projectCountText }}</span>
+			<button type="button" class="link-button" @click="useFirstProject" :disabled="!uniNames.length">使用第一个打开项目</button>
+		</div>
+	</div>
+
+	<div class="panel">
+		<div class="panel-title compact">
+			<span class="section-index">2</span>
+			<div>
+				<h2>iOS SDK</h2>
+				<p>支持 DCloud 下载地址、本地 zip 文件路径或已解压目录。</p>
+			</div>
+		</div>
+		<label class="field-label" for="sdk-url">iOS 离线打包 SDK 地址</label>
+		<div class="input-action-row">
+			<el-input
+				id="sdk-url"
+				v-model="data.iosSdkDownloadUrl"
+				type="textarea"
+				:rows="2"
+				placeholder="请输入 iOS SDK 下载地址、本地 zip 路径或解压目录"
+			></el-input>
+			<button type="button" class="outline-button tall" @click="selectIosSdkDirectory">
+				<span class="button-icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H9l2 2h7.5A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5v-9Z"/></svg>
+				</span>
+				选择目录
+			</button>
+		</div>
+		<div class="hint-row">默认使用 DCloud 当前 iOS SDK，首次下载体积较大。</div>
+	</div>
+
+	<div class="two-column">
+		<div class="panel">
+			<div class="panel-title compact">
+				<span class="section-index">3</span>
+				<div>
+					<h2>输出</h2>
+					<p>选择生成 iOS 工程的位置。</p>
+				</div>
+			</div>
+			<label class="field-label" for="native-ios">iOS 工程输出目录</label>
+			<div class="path-row">
+				<el-input id="native-ios" v-model="data.uniappxNativeIos" placeholder="请选择或输入 iOS 原生工程输出目录"></el-input>
+				<button type="button" class="primary-button" @click="selectNativeIosDirectory">
+					<span class="button-icon" aria-hidden="true">
+						<svg viewBox="0 0 24 24"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4H10l2 2h5.5A2.5 2.5 0 0 1 20 8.5v1H4v-3Zm0 5h16v6A2.5 2.5 0 0 1 17.5 20h-11A2.5 2.5 0 0 1 4 17.5v-6Z"/></svg>
+					</span>
+					浏览
+				</button>
+			</div>
+			<div class="quick-actions">
+				<button type="button" class="ghost-button" @click="useProjectOutputDirectory" :disabled="!data.uniName">使用项目 unpackage 目录</button>
+				<button type="button" class="ghost-button" @click="clearOutputDirectory">清空</button>
+			</div>
+		</div>
+
+		<div class="panel">
+			<div class="panel-title compact">
+				<span class="section-index">4</span>
+				<div>
+					<h2>应用标识</h2>
+					<p>为空时尝试读取本地资源 manifest。</p>
+				</div>
+			</div>
+			<label class="field-label" for="bundle-id">Bundle Identifier</label>
+			<el-input id="bundle-id" v-model="data.iosBundleId" placeholder="例如 cn.testapp.app"></el-input>
+			<div class="option-box">
+				<el-checkbox v-model="data.autoPublishAppResource">生成前自动发行 iOS 本地资源</el-checkbox>
+			</div>
+		</div>
+	</div>
+
+	<div class="footer-note">
+		<span class="status-dot" :class="{ online: socketReady }"></span>
+		<span>{{ socketReady ? '已连接 HBuilderX 插件进程' : '正在连接 HBuilderX 插件进程' }}</span>
+	</div>
+</div>
+
+<script>
+	const { computed, createApp, reactive, ref } = Vue;
+
+	createApp({
+		setup() {
+			const uniNames = ref([]);
+			const socketReady = ref(false);
+			const data = reactive({
+				uniName: '',
+				iosSdkDownloadUrl: '',
+				uniappxNativeIos: '',
+				iosBundleId: '',
+				autoPublishAppResource: false
+			});
+
+			const projectCountText = computed(() => {
+				if (!uniNames.value.length) {
+					return '未读取到 HBuilderX 已打开项目';
+				}
+				return `已读取 ${uniNames.value.length} 个 HBuilderX 项目`;
+			});
+
+			const createFilterUniName = (queryString) => {
+				const query = queryString.toLowerCase();
+				return (item) => item.name.toLowerCase().includes(query) || item.fsPath.toLowerCase().includes(query);
+			};
+
+			const querySearchUniName = (queryString, cb) => {
+				const results = queryString
+					? uniNames.value.filter(createFilterUniName(queryString))
+					: uniNames.value;
+				cb(results);
+			};
+
+			const onSelectUniName = (item) => {
+				data.uniName = item.fsPath;
+			};
+
+			const ws = new WebSocket('ws://127.0.0.1:9993?key=adminadmin2024');
+
+			const sendCommand = (type, payload = {}) => {
+				if (ws.readyState !== WebSocket.OPEN) {
+					ElementPlus.ElMessage.warning('插件通信还未连接完成，请稍后再试');
+					return;
+				}
+				ws.send(JSON.stringify({ type, data: payload }));
+			};
+
+			const useFirstProject = () => {
+				if (uniNames.value[0]?.fsPath) {
+					data.uniName = uniNames.value[0].fsPath;
+				}
+			};
+
+			const selectNativeIosDirectory = () => {
+				sendCommand('selectNativeIosDirectory', { currentValue: data.uniappxNativeIos });
+			};
+
+			const selectIosSdkDirectory = () => {
+				sendCommand('selectIosSdkDirectory', { currentValue: data.iosSdkDownloadUrl });
+			};
+
+			const useProjectOutputDirectory = () => {
+				sendCommand('useProjectOutputDirectory', { projectPath: data.uniName });
+			};
+
+			const clearOutputDirectory = () => {
+				data.uniappxNativeIos = '';
+			};
+
+			ws.onopen = () => {
+				socketReady.value = true;
+			};
+
+			ws.onclose = () => {
+				socketReady.value = false;
+			};
+
+			ws.onmessage = (event) => {
+				const content = JSON.parse(event.data);
+				if (content.type === 'uniNames') {
+					uniNames.value = content.data || [];
+				}
+				if (content.type === 'uniName') {
+					data.uniName = content.data || '';
+				}
+				if (content.type === 'iosSdkDownloadUrl') {
+					data.iosSdkDownloadUrl = content.data || '';
+				}
+				if (content.type === 'uniappxNativeIos') {
+					data.uniappxNativeIos = content.data || '';
+				}
+				if (content.type === 'iosBundleId') {
+					data.iosBundleId = content.data || '';
+				}
+				if (content.type === 'autoPublishAppResource') {
+					data.autoPublishAppResource = content.data === true;
+				}
+				if (content.type === 'formError') {
+					ElementPlus.ElMessage.error(content.data || '选择目录失败');
+				}
+			};
+
+			const validate = () => {
+				if (!data.uniName) {
+					ElementPlus.ElMessage.error('请选择要生成 iOS 工程的项目');
+					return false;
+				}
+				if (!data.iosSdkDownloadUrl) {
+					ElementPlus.ElMessage.error('请填写 iOS 离线打包 SDK 地址');
+					return false;
+				}
+				return true;
+			};
+
+			const initHBuilderXReceive = () => {
+				hbuilderx.onDidReceiveMessage((msg) => {
+					if (msg.type !== 'DialogButtonEvent') {
+						return;
+					}
+					if (msg.button === '取消') {
+						hbuilderx.postMessage({
+							command: 'cancel'
+						});
+						return;
+					}
+					if (msg.button !== '生成工程') {
+						return;
+					}
+					if (!validate()) {
+						return;
+					}
+					hbuilderx.postMessage({
+						command: 'confirm',
+						data: JSON.parse(JSON.stringify(data))
+					});
+				});
+			};
+
+			window.addEventListener('hbuilderxReady', initHBuilderXReceive);
+
+			// 浏览器预览时没有 hbuilderx 对象，保留标准 message 便于本地快速检查表单。
+			window.addEventListener('message', (event) => {
+				if (event.data.type !== 'DialogButtonEvent') {
+					return;
+				}
+				if (event.data.button === '取消') {
+					return;
+				}
+				if (event.data.button !== '生成工程') {
+					return;
+				}
+				if (!validate()) {
+					return;
+				}
+				sendCommand('confirm', JSON.parse(JSON.stringify(data)));
+			});
+
+			return {
+				data,
+				uniNames,
+				socketReady,
+				projectCountText,
+				querySearchUniName,
+				onSelectUniName,
+				useFirstProject,
+				selectNativeIosDirectory,
+				selectIosSdkDirectory,
+				useProjectOutputDirectory,
+				clearOutputDirectory
+			};
+		}
+	}).use(ElementPlus).mount('#app');
+</script>
+
+<style>
+	:root {
+		--page: #f4f6f8;
+		--panel: #ffffff;
+		--text: #101828;
+		--muted: #667085;
+		--line: #d9e0e8;
+		--line-strong: #c9d3df;
+		--primary: #1f6feb;
+		--primary-dark: #1557ba;
+		--soft: #eef4ff;
+		--success: #16a34a;
+	}
+	* {
+		box-sizing: border-box;
+	}
+	body {
+		margin: 0;
+		background: var(--page);
+		color: var(--text);
+		font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+	}
+	button {
+		font: inherit;
+	}
+	.app-shell {
+		min-height: 100vh;
+		padding: 20px;
+	}
+	.topbar {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 16px;
+		margin-bottom: 14px;
+	}
+	.brand {
+		display: flex;
+		align-items: center;
+		gap: 14px;
+		min-width: 0;
+	}
+	.brand-mark {
+		display: grid;
+		place-items: center;
+		flex: 0 0 auto;
+		width: 44px;
+		height: 44px;
+		border-radius: 8px;
+		background: #111827;
+		color: #ffffff;
+		font-weight: 760;
+		letter-spacing: 0;
+	}
+	.eyebrow {
+		margin-bottom: 2px;
+		color: var(--primary);
+		font-size: 12px;
+		font-weight: 700;
+		letter-spacing: 0;
+	}
+	h1,
+	h2,
+	p {
+		margin: 0;
+	}
+	h1 {
+		font-size: 22px;
+		line-height: 1.15;
+		letter-spacing: 0;
+	}
+	.brand p,
+	.panel-title p {
+		margin-top: 4px;
+		color: var(--muted);
+		font-size: 12px;
+		line-height: 1.5;
+	}
+	.meta {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+	}
+	.chip {
+		display: inline-flex;
+		align-items: center;
+		height: 26px;
+		padding: 0 10px;
+		border: 1px solid #bad2ff;
+		border-radius: 999px;
+		background: var(--soft);
+		color: #1d4ed8;
+		font-size: 12px;
+		font-weight: 650;
+	}
+	.chip.muted {
+		border-color: var(--line);
+		background: #ffffff;
+		color: #475467;
+	}
+	.panel {
+		margin-top: 12px;
+		padding: 16px;
+		border: 1px solid var(--line);
+		border-radius: 8px;
+		background: var(--panel);
+		box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+	}
+	.panel-title {
+		display: flex;
+		align-items: flex-start;
+		gap: 10px;
+		margin-bottom: 14px;
+	}
+	.panel-title.compact {
+		margin-bottom: 12px;
+	}
+	.section-index {
+		display: grid;
+		place-items: center;
+		flex: 0 0 auto;
+		width: 24px;
+		height: 24px;
+		border-radius: 6px;
+		background: #111827;
+		color: #ffffff;
+		font-size: 12px;
+		font-weight: 760;
+	}
+	h2 {
+		font-size: 15px;
+		line-height: 1.25;
+		letter-spacing: 0;
+	}
+	.field-label {
+		display: block;
+		margin-bottom: 7px;
+		color: #344054;
+		font-size: 12px;
+		font-weight: 700;
+	}
+	.hint-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		margin-top: 8px;
+		color: var(--muted);
+		font-size: 12px;
+		line-height: 1.45;
+	}
+	.two-column {
+		display: grid;
+		grid-template-columns: minmax(0, 1.12fr) minmax(260px, 0.88fr);
+		gap: 12px;
+	}
+	.input-action-row,
+	.path-row {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: 10px;
+		align-items: stretch;
+	}
+	.path-row {
+		align-items: center;
+	}
+	.quick-actions {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 8px;
+		margin-top: 10px;
+	}
+	.option-box {
+		margin-top: 14px;
+		padding: 10px 12px;
+		border: 1px solid var(--line);
+		border-radius: 8px;
+		background: #f8fafc;
+	}
+	.primary-button,
+	.outline-button,
+	.ghost-button,
+	.link-button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
+		border-radius: 7px;
+		font-size: 13px;
+		font-weight: 700;
+		letter-spacing: 0;
+		cursor: pointer;
+		transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+	}
+	.primary-button,
+	.outline-button {
+		min-width: 96px;
+		height: 32px;
+		padding: 0 12px;
+	}
+	.primary-button {
+		border: 1px solid var(--primary);
+		background: var(--primary);
+		color: #ffffff;
+	}
+	.primary-button:hover {
+		border-color: var(--primary-dark);
+		background: var(--primary-dark);
+		box-shadow: 0 1px 3px rgba(31, 111, 235, 0.2);
+	}
+	.outline-button {
+		border: 1px solid var(--line-strong);
+		background: #ffffff;
+		color: #1f2937;
+	}
+	.outline-button:hover,
+	.ghost-button:hover,
+	.link-button:hover {
+		border-color: #b6c7dd;
+		background: #f2f6fb;
+		color: #1557ba;
+	}
+	.outline-button.tall {
+		height: auto;
+		min-height: 54px;
+	}
+	.ghost-button {
+		height: 28px;
+		padding: 0 10px;
+		border: 1px solid var(--line);
+		background: #ffffff;
+		color: #475467;
+	}
+	.link-button {
+		height: 24px;
+		padding: 0 8px;
+		border: 1px solid transparent;
+		background: transparent;
+		color: var(--primary);
+	}
+	.primary-button:disabled,
+	.outline-button:disabled,
+	.ghost-button:disabled,
+	.link-button:disabled {
+		cursor: not-allowed;
+		opacity: 0.48;
+	}
+	.button-icon {
+		display: inline-flex;
+		width: 15px;
+		height: 15px;
+	}
+	.button-icon svg {
+		width: 15px;
+		height: 15px;
+		fill: currentColor;
+	}
+	.project-option {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		padding: 4px 0;
+		line-height: 1.35;
+	}
+	.project-option strong {
+		color: #101828;
+		font-size: 13px;
+	}
+	.project-option span {
+		overflow: hidden;
+		color: var(--muted);
+		font-size: 12px;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.footer-note {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-top: 12px;
+		color: var(--muted);
+		font-size: 12px;
+	}
+	.status-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 999px;
+		background: #d0d5dd;
+	}
+	.status-dot.online {
+		background: var(--success);
+	}
+	.el-autocomplete,
+	.el-input,
+	.el-textarea {
+		width: 100%;
+	}
+	.el-input__wrapper,
+	.el-textarea__inner {
+		border-radius: 7px;
+		box-shadow: 0 0 0 1px var(--line) inset;
+	}
+	.el-input__wrapper:hover,
+	.el-textarea__inner:hover {
+		box-shadow: 0 0 0 1px var(--line-strong) inset;
+	}
+	.el-input__wrapper.is-focus,
+	.el-textarea__inner:focus {
+		box-shadow: 0 0 0 1px var(--primary) inset, 0 0 0 3px rgba(31, 111, 235, 0.12);
+	}
+	.el-checkbox {
+		height: auto;
+		color: #344054;
+		font-weight: 650;
+	}
+	@media (max-width: 720px) {
+		.topbar,
+		.hint-row {
+			align-items: flex-start;
+			flex-direction: column;
+		}
+		.two-column,
+		.input-action-row,
+		.path-row {
+			grid-template-columns: 1fr;
+		}
+		.primary-button,
+		.outline-button {
+			width: 100%;
+		}
+	}
+</style>

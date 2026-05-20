@@ -13,7 +13,15 @@ function buildMissingCoreError(coreRoot) {
 
 function getPackStart(extensionPath) {
 	const coreRoot = getCoreRoot(extensionPath);
-	const packPath = path.join(coreRoot, 'src', 'pack.js');
+	return loadStartFunction(path.join(coreRoot, 'src', 'pack.js'), coreRoot);
+}
+
+function getIosPackStart(extensionPath) {
+	const coreRoot = getCoreRoot(extensionPath);
+	return loadStartFunction(path.join(coreRoot, 'src', 'pack-ios.js'), coreRoot);
+}
+
+function loadStartFunction(packPath, coreRoot) {
 	if (!fs.existsSync(packPath)) {
 		throw buildMissingCoreError(coreRoot);
 	}
@@ -46,5 +54,6 @@ function getLogger(extensionPath) {
 
 module.exports = {
 	getPackStart,
+	getIosPackStart,
 	getLogger
 };
