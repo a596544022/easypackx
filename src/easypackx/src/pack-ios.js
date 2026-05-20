@@ -398,7 +398,7 @@ function patchUniAppBridge(projectDir) {
         }
         return UniAppRootViewController()
     }
-    
+
 `;
 	if (!content.includes(marker)) {
 		throw new Error(`iOS 模板桥接文件结构异常，缺少退出 UniApp 标记：${bridgePath}`);
@@ -428,7 +428,7 @@ function patchAutoLaunchAppDelegate(projectDir) {
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-    
+
     // 先初始化 uni-app x SDK，再创建运行时根控制器。
     [UniAppBridge applicationDidFinishLaunchingWithOptions:application :launchOptions];
     self.window.rootViewController = [UniAppBridge createUniAppRootViewController];
