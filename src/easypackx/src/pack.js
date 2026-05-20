@@ -162,6 +162,7 @@ let moduleBuildGradleConfig;
 let rootBuildGradleConfig;
 let baseLocalSdk;
 let baseSettingsGradle;
+let utsHookClasses = new Set();
 
 let packConfig = null;
 
@@ -318,6 +319,7 @@ function initBuildConfig() {
 			maven: []
 		}
 	}
+	utsHookClasses = new Set();
 	storePath = ''
 	packType = '1'
 }
@@ -400,6 +402,27 @@ const uniModulesAndroidPath = (moduleName) => {
 function hasUniModuleAndroidSource(moduleName) {
 	// 只有存在 Android 原生源码的依赖才加入 Gradle 工程，避免可选依赖导致 settings.gradle 指向不存在的模块。
 	return fsExtra.existsSync(uniModulesAndroidPath(moduleName));
+}
+
+function addUtsHookClass(hookClass) {
+	if (!hookClass) {
+		return;
+	}
+	// UTSHooksClassArray 只能生成一个 buildConfigField；多个插件 Hook 需要先合并，否则 Gradle 最终只保留最后一个。
+	utsHookClasses.add(hookClass.replace(/^\{?\\"?/, '').replace(/\\"?\}?$/, ''));
+}
+
+function applyUtsHookClasses() {
+	if (utsHookClasses.size === 0) {
+		return;
+	}
+	const hooksClassArray = Array.from(utsHookClasses).map(hookClass => `\\"${hookClass}\\"`);
+	appBuildGradleConfig.buildFeatures.buildConfig = true;
+	appBuildGradleConfig.defaultConfig.buildConfigField = appBuildGradleConfig.defaultConfig.buildConfigField
+		.filter(item => !item.includes('"UTSHooksClassArray"'));
+	appBuildGradleConfig.defaultConfig.buildConfigField.push(
+		`"String[]", "UTSHooksClassArray", "{${hooksClassArray.toString()}}"`
+	);
 }
 
 // 删除文件或文件夹
@@ -1227,13 +1250,7 @@ async function updateUniModulesSrc() {
 							}
 							// 设置hooksClass信息
 							if (jsonData?.hooksClass) {
-								let hooksClass = `{\\"${jsonData['hooksClass']}\\"}`;
-								const configContent = `"String[]", "UTSHooksClassArray", "${hooksClass}"`;
-								appBuildGradleConfig.buildFeatures.buildConfig = true;
-								if (!appBuildGradleConfig.defaultConfig.buildConfigField.includes(
-										configContent)) {
-									appBuildGradleConfig.defaultConfig.buildConfigField.push(configContent);
-								}
+								addUtsHookClass(jsonData['hooksClass']);
 							}
 							// 设置uts组件信息
 							if (jsonData?.components) {
@@ -2616,13 +2633,11 @@ async function updateBuildInModules() {
 					`"String", "UTSRegisterProvider", "\\"[${utsRegisterProviders.toString()}]\\""`
 				);
 			}
-			// utsHooksClassArray注册
-			if (utsHooksClassArray.length > 0) {
-				appBuildGradleConfig.defaultConfig.buildConfigField.push(
-					`"String[]", "UTSHooksClassArray", '${utsHooksClassArray.toString()}'`
-				);
+				// utsHooksClassArray注册
+				if (utsHooksClassArray.length > 0) {
+					utsHooksClassArray.forEach(addUtsHookClass);
+				}
 			}
-		}
 		// console.log(appBuildGradleConfig)
 	} catch (e) {
 		output.error(e.message, customConsoleLog);
@@ -2757,6 +2772,7 @@ async function buildUnix() {
 	const compileAllBuildGradleMessage = customSetStatusMessage?.('开始编译所有模块的build.gradle配置...');
 	const compileAllBuildGradleSpinner = ora('开始编译所有模块的build.gradle配置...').start();
 	logger.info('开始编译所有模块的build.gradle配置...');
+	applyUtsHookClasses();
 	await compileAllBuildGradle();
 	compileAllBuildGradleSpinner.succeed();
 	compileAllBuildGradleMessage?.dispose();

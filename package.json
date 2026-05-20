@@ -3,7 +3,7 @@
 	"name": "easypackx",
 	"description": "一个用来给 `uniapp/x` 构建自定义调试基座和发行包的离线打包插件。",
 	"displayName": "EasyPackX",
-	"version": "1.0.37",
+	"version": "1.0.38",
 	"publisher": "local",
 	"engines": {
 		"HBuilderX": ">=4.18.0"
